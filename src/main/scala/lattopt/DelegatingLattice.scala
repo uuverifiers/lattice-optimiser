@@ -27,9 +27,9 @@ abstract class DelegatingLattice[ForegroundObject, Cost, A <: OptLattice[_, _]]
 
   def nodeCount : BigInt = underlying.nodeCount
 
-  def getDecrement(feasible : LatticeObject,
-                   infeasible : LatticeObject) : LatticeObject =
-    underlying.getDecrement(feasible, infeasible)
+  def feasibilityBound(feasible : LatticeObject,
+                       infeasible : LatticeObject) : LatticeObject =
+    underlying.feasibilityBound(feasible, infeasible)
 
 }
 

@@ -28,13 +28,13 @@ abstract class OptLattice[ForegroundObject, Cost] {
   /** Number of nodes of this lattice */
   def nodeCount : BigInt
 
-  /** Assuming that <code>infeasible < feasible</code>,
-      return an object such that
-      <code>feasible = join(infeasible, result)</code>,
-      and such that, whenever <code>x <= elem</code>, and <code>x</code>
-      feasible, it holds that <code>x >= result</code>. */
-  def getDecrement(feasible : LatticeObject,
-                   infeasible : LatticeObject) : LatticeObject
+  /** Assuming that <code>infeasible > feasible</code>,
+      return an object <code>result</code> such that
+      <code>feasible = meet(infeasible, result)</code>,
+      and such that, whenever <code>feasible <= x</code>, and <code>x</code>
+      feasible, it holds that <code>x <= result</code>. */
+  def feasibilityBound(feasible : LatticeObject,
+                       infeasible : LatticeObject) : LatticeObject
 
   //////////////////////////////////////////////////////////////////////////////
 
