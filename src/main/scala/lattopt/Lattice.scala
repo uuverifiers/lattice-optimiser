@@ -1,5 +1,3 @@
-
-
 package lattopt;
 
 abstract class OptLattice[ForegroundObject, Cost] {
@@ -24,6 +22,12 @@ abstract class OptLattice[ForegroundObject, Cost] {
 
   /** Check whether the given lattice object is feasible */
   def isFeasible(x : LatticeObject) : Boolean
+  
+  /** Check whether the lattice is well-defined **/
+  private final def sanityCheck() {
+    assert(isFeasible(bottom))
+    assert(latticeOrder.gteq(top, bottom))
+  }
 
   /** Number of nodes of this lattice */
   def nodeCount : BigInt
