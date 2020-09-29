@@ -40,7 +40,7 @@ class ProductLattice[ForegroundObjectA, ForegroundObjectB, CostA, CostB, A <: Op
       (a.join(x._1, y._1), b.join(x._2, y._2))
       
   def feasibilityBound(feasible : LatticeObject,
-                   infeasible : LatticeObject) : LatticeObject =
+                       infeasible : LatticeObject) : LatticeObject =
     if (feasible._1 == infeasible._1)
       (a.bottom, b.feasibilityBound(feasible._2, infeasible._2))
     else if (feasible._2 == infeasible._2)

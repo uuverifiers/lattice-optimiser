@@ -1,5 +1,13 @@
 package lattopt;
 
+/**
+ * The parent of all optimisation lattices. Each optimisation lattice
+ * has a <code>LatticeObject</code> type, the internal type representing
+ * objects of the lattice; a <code>ForegroundObject</code> type, the foreground
+ * objects that lattice objects are mapped to; and a <code>Cost</code> type
+ * defining the range of the objective function.
+ * 
+ */
 abstract class OptLattice[ForegroundObject, Cost] {
   type LatticeObject
 
@@ -36,7 +44,7 @@ abstract class OptLattice[ForegroundObject, Cost] {
       return an object <code>result</code> such that
       <code>feasible = meet(infeasible, result)</code>,
       and such that, whenever <code>feasible <= x</code>, and <code>x</code>
-      feasible, it holds that <code>x <= result</code>. */
+      is feasible, it holds that <code>x <= result</code>. */
   def feasibilityBound(feasible : LatticeObject,
                        infeasible : LatticeObject) : LatticeObject
 
