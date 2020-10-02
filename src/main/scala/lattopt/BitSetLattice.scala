@@ -15,6 +15,22 @@ object BitSetLattice {
 
 }
 
+object PowerSetLattice {
+  def apply[A](elements : Seq[A]) : OptLattice[Set[A], Int] = {
+    val indexed = elements.toIndexedSeq
+    for (bs <- BitSetLattice(elements.size)) yield {
+      (for (ind <- bs.iterator) yield indexed(ind)).toSet
+    }
+  }
+
+  def inverted[A](elements : Seq[A]) : OptLattice[Set[A], Int] = {
+    val indexed = elements.toIndexedSeq
+    for (bs <- BitSetLattice.inverted(elements.size)) yield {
+      (for (ind <- bs.iterator) yield indexed(ind)).toSet
+    }
+  }
+}
+
 class BitSetLattice private (width : Int) extends OptLattice[BitSet, Int] {
   type LatticeObject = BitSet
 

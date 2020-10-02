@@ -71,6 +71,10 @@ trait OptLattice[Label, Cost] extends Lattice[Label] {
   def filter(pred : Label => Boolean) : OptLattice[Label, Cost] =
     FilteredLattice(this, pred)
 
+  def *[Label1, Cost1, That <: OptLattice[Label1, Cost1]] (that : That)
+       : OptLattice[(Label, Label1), (Cost, Cost1)] =
+    new ProductLattice(this, that)
+
 }
 
 

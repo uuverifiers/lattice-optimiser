@@ -1,9 +1,11 @@
 
 package lattopt;
 
-class ProductLattice[ForegroundObjectA, ForegroundObjectB, CostA, CostB, A <: OptLattice[ForegroundObjectA,CostA], B <: OptLattice[ForegroundObjectB,CostB]] 
+class ProductLattice[LabelA, LabelB, CostA, CostB,
+                     A <: OptLattice[LabelA, CostA],
+                     B <: OptLattice[LabelB, CostB]]
                     (val a : A, val b : B)
-                    extends OptLattice[(ForegroundObjectA,ForegroundObjectB),(CostA,CostB)] {
+                    extends OptLattice[(LabelA, LabelB), (CostA, CostB)] {
   type LatticeObject = (a.LatticeObject, b.LatticeObject)
 
   override def toString =
@@ -60,7 +62,7 @@ class ProductLattice[ForegroundObjectA, ForegroundObjectB, CostA, CostB, A <: Op
       a.isFeasible(x._1) && b.isFeasible(x._2)
  
   def toCost(x : LatticeObject) =
-    (a.toCost(x._1),b.toCost(x._2))
+    (a.toCost(x._1), b.toCost(x._2))
     
   def getLabel(x : LatticeObject) =
     (a.getLabel(x._1), b.getLabel(x._2)) 
