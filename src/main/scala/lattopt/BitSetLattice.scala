@@ -3,7 +3,19 @@ package lattopt;
 
 import scala.collection.immutable.BitSet
 
-class BitSetLattice(width : Int) extends OptLattice[BitSet, Int] {
+object BitSetLattice {
+
+  def apply(width : Int) : OptLattice[BitSet, Int] =
+    new BitSetLattice(width)
+
+  def inverted(width : Int) : OptLattice[BitSet, Int] = {
+    val lat = new BitSetLattice(width)
+    for (w <- lat) yield (w ^ lat.top)
+  }
+
+}
+
+class BitSetLattice private (width : Int) extends OptLattice[BitSet, Int] {
   type LatticeObject = BitSet
 
   val latticeOrder  = new PartialOrdering[BitSet] {

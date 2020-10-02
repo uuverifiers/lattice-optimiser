@@ -5,7 +5,7 @@ object Main extends App {
 
   println("Lattice test")
 
-  val lattice1 = new BitSetLattice(8)
+  val lattice1 = BitSetLattice.inverted(8)
   val lattice2 = for (x <- lattice1) yield (for (n <- x) yield (1 << n)).sum
 
   println(lattice1)

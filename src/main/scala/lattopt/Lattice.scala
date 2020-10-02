@@ -32,15 +32,6 @@ trait Lattice[Label] {
   def nodeCount : BigInt
 }
 
-
-/*
-class InvertedLattice[Label] (underlying : Lattice[Label])
-      extends Lattice[Label] {
-
-
-}
- */
-
 /**
  * The parent of all optimisation lattices. Each optimisation lattice
  * is a lattice, and has in addition a <code>Cost</code> type defining

@@ -28,8 +28,7 @@ class ProductLattice[ForegroundObjectA, ForegroundObjectB, CostA, CostB, A <: Op
         case _ => 0
       }
  
-    def lteq(x: LatticeObject, 
-             y: LatticeObject) =
+    def lteq(x: LatticeObject, y: LatticeObject) =
       a.latticeOrder.lteq(x._1, y._1) && b.latticeOrder.lteq(x._2, y._2)
   }
 
