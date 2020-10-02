@@ -1,14 +1,12 @@
 package lattopt;
 
 /**
- * The parent of all optimisation lattices. Each optimisation lattice
- * has a <code>LatticeObject</code> type, the internal type representing
- * objects of the lattice; a <code>ForegroundObject</code> type, the foreground
- * objects that lattice objects are mapped to; and a <code>Cost</code> type
- * defining the range of the objective function.
- * 
+ * The parent of all lattices. Each lattice has a
+ * <code>LatticeObject</code> type, the internal type representing
+ * objects of the lattice; and a <code>Label</code> type defining the
+ * labels of lattice objects.
  */
-abstract class OptLattice[ForegroundObject, Cost] {
+trait Lattice[Label] {
   type LatticeObject
 
   val latticeOrder : PartialOrdering[LatticeObject]
@@ -23,7 +21,32 @@ abstract class OptLattice[ForegroundObject, Cost] {
   def pred(x: LatticeObject): Iterator[LatticeObject]
 
   /** Map a lattice object to the corresponding foreground object */
-  def toForeground(x : LatticeObject) : ForegroundObject
+  def getLabel(x : LatticeObject) : Label
+
+  /** Check whether the lattice is well-defined **/
+  protected def sanityCheck {
+    assert(latticeOrder.gteq(top, bottom))
+  }
+
+  /** Number of nodes of this lattice */
+  def nodeCount : BigInt
+}
+
+
+/*
+class InvertedLattice[Label] (underlying : Lattice[Label])
+      extends Lattice[Label] {
+
+
+}
+ */
+
+/**
+ * The parent of all optimisation lattices. Each optimisation lattice
+ * is a lattice, and has in addition a <code>Cost</code> type defining
+ * the range of the objective function.
+ */
+trait OptLattice[Label, Cost] extends Lattice[Label] {
 
   /** Map a lattice object to its cost */
   def toCost(x : LatticeObject) : Cost
@@ -32,13 +55,10 @@ abstract class OptLattice[ForegroundObject, Cost] {
   def isFeasible(x : LatticeObject) : Boolean
   
   /** Check whether the lattice is well-defined **/
-  private final def sanityCheck() {
+  protected override def sanityCheck {
+    super.sanityCheck
     assert(isFeasible(bottom))
-    assert(latticeOrder.gteq(top, bottom))
   }
-
-  /** Number of nodes of this lattice */
-  def nodeCount : BigInt
 
   /** Assuming that <code>infeasible > feasible</code>,
       return an object <code>result</code> such that
@@ -50,17 +70,14 @@ abstract class OptLattice[ForegroundObject, Cost] {
 
   //////////////////////////////////////////////////////////////////////////////
 
-  /** Map foreground objects to some new type, updating the
-      <code>toForeground</code> method */
-  def map[ForegroundObject1]
-         (mapping : ForegroundObject => ForegroundObject1)
-        : OptLattice[ForegroundObject1, Cost] =
-    ForegroundMapLattice(this, mapping)
+  /** Map labels to some new type, updating the <code>getLabel</code>
+      method */
+  def map[Label1](mapping : Label => Label1) : OptLattice[Label1, Cost] =
+    RelabeledLattice(this, mapping)
 
   /** Filter out objects of the lattice by updating the
       <code>isFeasible</code> method */
-  def filter(pred : ForegroundObject => Boolean)
-           : OptLattice[ForegroundObject, Cost] =
+  def filter(pred : Label => Boolean) : OptLattice[Label, Cost] =
     FilteredLattice(this, pred)
 
 }

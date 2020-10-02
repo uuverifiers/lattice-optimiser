@@ -63,8 +63,10 @@ class ProductLattice[ForegroundObjectA, ForegroundObjectB, CostA, CostB, A <: Op
   def toCost(x : LatticeObject) =
     (a.toCost(x._1),b.toCost(x._2))
     
-  def toForeground(x : LatticeObject) =
-    (a.toForeground(x._1),b.toForeground(x._2)) 
+  def getLabel(x : LatticeObject) =
+    (a.getLabel(x._1), b.getLabel(x._2)) 
+
+  sanityCheck
 
 }
 

@@ -30,7 +30,7 @@ class BitSetLattice(width : Int) extends OptLattice[BitSet, Int] {
   def pred(obj: LatticeObject) : Iterator[LatticeObject] =
     for (t <- obj.iterator) yield (obj - t)
 
-  def toForeground(x : LatticeObject) : BitSet = x
+  def getLabel(x : LatticeObject) : BitSet = x
 
   def toCost(x : LatticeObject) : Int = x.size
 
@@ -45,5 +45,7 @@ class BitSetLattice(width : Int) extends OptLattice[BitSet, Int] {
   }
 
   override def toString : String = "BitSetLattice(" + width + ")"
+
+  sanityCheck
 
 }

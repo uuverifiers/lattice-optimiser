@@ -11,14 +11,14 @@ object Main extends App {
   println(lattice1)
   println(lattice2)
 
-  println(lattice2.toForeground(lattice2.bottom))
-  println(lattice2.toForeground(lattice2.top))
+  println(lattice2.getLabel(lattice2.bottom))
+  println(lattice2.getLabel(lattice2.top))
 
   {
     var x = lattice2.bottom
     while (lattice2.succ(x).hasNext) {
       x = lattice2.succ(x).next
-      println(lattice2.toForeground(x))
+      println(lattice2.getLabel(x))
     }
   }
 

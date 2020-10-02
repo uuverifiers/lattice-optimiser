@@ -1,9 +1,9 @@
 
 package lattopt;
 
-abstract class DelegatingLattice[ForegroundObject, Cost, A <: OptLattice[_, _]]
+abstract class DelegatingLattice[Label, Cost, A <: OptLattice[_, _]]
                                 (val underlying : A)
-      extends OptLattice[ForegroundObject, Cost] {
+      extends OptLattice[Label, Cost] {
 
   type LatticeObject = underlying.LatticeObject
 //  override def toString = underlying.toString
@@ -35,13 +35,13 @@ abstract class DelegatingLattice[ForegroundObject, Cost, A <: OptLattice[_, _]]
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class SameTypeDelegatingLattice[ForegroundObject, Cost,
-                                A <: OptLattice[ForegroundObject, Cost]]
+class SameTypeDelegatingLattice[Label, Cost,
+                                A <: OptLattice[Label, Cost]]
                                (underlying1 : A)
-      extends DelegatingLattice[ForegroundObject, Cost, A](underlying1) {
+      extends DelegatingLattice[Label, Cost, A](underlying1) {
 
-  def toForeground(x : LatticeObject) : ForegroundObject =
-    underlying.toForeground(x)
+  def getLabel(x : LatticeObject) : Label =
+    underlying.getLabel(x)
 
   def toCost(x : LatticeObject) : Cost =
     underlying.toCost(x)
@@ -53,29 +53,29 @@ class SameTypeDelegatingLattice[ForegroundObject, Cost,
 
 ////////////////////////////////////////////////////////////////////////////////
 
-object ForegroundMapLattice {
+object RelabeledLattice {
 
-  def apply[ForegroundObject, ForegroundObject1, Cost]
-           (underlying : OptLattice[ForegroundObject, Cost],
-            mapping : ForegroundObject => ForegroundObject1)
-          : OptLattice[ForegroundObject1, Cost] = underlying match {
-    case underlying : ForegroundMapLattice[_, ForegroundObject, Cost, _] =>
-      new ForegroundMapLattice(underlying.underlying,
-                               underlying.mapping andThen mapping)
+  def apply[Label, Label1, Cost]
+           (underlying : OptLattice[Label, Cost],
+            mapping : Label => Label1)
+          : OptLattice[Label1, Cost] = underlying match {
+    case underlying : RelabeledLattice[_, Label, Cost, _] =>
+      new RelabeledLattice(underlying.underlying,
+                           underlying.mapping andThen mapping)
     case _ =>
-      new ForegroundMapLattice(underlying, mapping)
+      new RelabeledLattice(underlying, mapping)
   }
 
 }
 
-class ForegroundMapLattice[ForegroundObject, ForegroundObject1, Cost,
-                           A <: OptLattice[ForegroundObject, Cost]] private
+class RelabeledLattice[Label, Label1, Cost,
+                           A <: OptLattice[Label, Cost]] private
                           (underlying1 : A,
-                           val mapping : ForegroundObject => ForegroundObject1)
-      extends DelegatingLattice[ForegroundObject1, Cost, A](underlying1) {
+                           val mapping : Label => Label1)
+      extends DelegatingLattice[Label1, Cost, A](underlying1) {
 
-  def toForeground(x : LatticeObject) : ForegroundObject1 =
-    mapping(underlying.toForeground(x))
+  def getLabel(x : LatticeObject) : Label1 =
+    mapping(underlying.getLabel(x))
 
   def toCost(x : LatticeObject) : Cost =
     underlying.toCost(x)
@@ -88,11 +88,10 @@ class ForegroundMapLattice[ForegroundObject, ForegroundObject1, Cost,
 ////////////////////////////////////////////////////////////////////////////////
 
 object FilteredLattice {
-  def apply[ForegroundObject, Cost]
-           (underlying : OptLattice[ForegroundObject, Cost],
-            pred : ForegroundObject => Boolean)
-          : OptLattice[ForegroundObject, Cost] = underlying match {
-    case underlying : FilteredLattice[ForegroundObject, Cost, _] =>
+  def apply[Label, Cost]
+           (underlying : OptLattice[Label, Cost], pred : Label => Boolean)
+          : OptLattice[Label, Cost] = underlying match {
+    case underlying : FilteredLattice[Label, Cost, _] =>
       new FilteredLattice(underlying.underlying,
                           x => underlying.pred(x) && pred(x))
     case _ =>
@@ -100,13 +99,11 @@ object FilteredLattice {
   }
 }
 
-class FilteredLattice[ForegroundObject, Cost,
-                      A <: OptLattice[ForegroundObject, Cost]] private
-             (underlying1 : A,
-              val pred : ForegroundObject => Boolean)
-     extends SameTypeDelegatingLattice[ForegroundObject, Cost, A](underlying1) {
+class FilteredLattice[Label, Cost, A <: OptLattice[Label, Cost]] private
+             (underlying1 : A, val pred : Label => Boolean)
+     extends SameTypeDelegatingLattice[Label, Cost, A](underlying1) {
 
   override def isFeasible(x : LatticeObject) : Boolean =
-    underlying.isFeasible(x) && pred(toForeground(x))
+    underlying.isFeasible(x) && pred(getLabel(x))
 
 }
