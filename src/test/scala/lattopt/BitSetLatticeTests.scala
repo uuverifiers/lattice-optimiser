@@ -1,8 +1,7 @@
 
 package lattopt;
 
-import org.scalacheck.{Arbitrary, Gen, Properties}
-import org.scalacheck.Prop._
+import org.scalacheck.Properties
 
 object BitSetLatticeTests extends Properties("BitSetLattice") {
 

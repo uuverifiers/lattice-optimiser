@@ -27,9 +27,9 @@ abstract class DelegatingOptLattice[Label, Cost, A <: OptLattice[_, _]]
 
   def nodeCount : BigInt = underlying.nodeCount
 
-  def feasibilityBound(feasible : LatticeObject,
-                       infeasible : LatticeObject) : LatticeObject =
-    underlying.feasibilityBound(feasible, infeasible)
+  def oneStepDifference(feasible : LatticeObject,
+                        infeasible : LatticeObject) : Option[LatticeObject] =
+    underlying.oneStepDifference(feasible, infeasible)
 
 }
 
@@ -79,6 +79,9 @@ class RelabeledLattice[Label, Label1, Cost, A <: OptLattice[Label, Cost]] privat
   def isFeasible(x : LatticeObject) : Boolean =
     underlying.isFeasible(x)
 
+  override def toString : String =
+    "Relabeled(" + underlying.toString + ")"
+
   sanityCheck
 
 }
@@ -102,6 +105,9 @@ class FilteredLattice[Label, Cost, A <: OptLattice[Label, Cost]] private
 
   override def isFeasible(x : LatticeObject) : Boolean =
     underlying.isFeasible(x) && pred(getLabel(x))
+
+  override def toString : String =
+    "Filtered(" + underlying.toString + ")"
 
   sanityCheck
 

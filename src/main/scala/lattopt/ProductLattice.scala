@@ -40,14 +40,16 @@ class ProductLattice[LabelA, LabelB, CostA, CostB,
   def join(x: LatticeObject, y: LatticeObject): LatticeObject =
       (a.join(x._1, y._1), b.join(x._2, y._2))
       
-  def feasibilityBound(feasible : LatticeObject,
-                       infeasible : LatticeObject) : LatticeObject =
+  def oneStepDifference(feasible : LatticeObject,
+                        infeasible : LatticeObject) : Option[LatticeObject] =
     if (feasible._1 == infeasible._1)
-      (a.bottom, b.feasibilityBound(feasible._2, infeasible._2))
+      for (x <- b.oneStepDifference(feasible._2, infeasible._2))
+      yield (a.bottom, x)
     else if (feasible._2 == infeasible._2)
-      (a.feasibilityBound(feasible._1, infeasible._1), b.bottom)
+      for (x <- a.oneStepDifference(feasible._1, infeasible._1))
+      yield (x, b.bottom)
     else
-      bottom
+      None
 
   // normal order
   def succ(x: LatticeObject): Iterator[LatticeObject] =

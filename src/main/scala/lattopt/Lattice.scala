@@ -51,13 +51,26 @@ trait OptLattice[Label, Cost] extends Lattice[Label] {
     assert(isFeasible(bottom))
   }
 
-  /** Assuming that <code>infeasible > feasible</code>,
-      return an object <code>result</code> such that
-      <code>feasible = meet(infeasible, result)</code>,
-      and such that, whenever <code>feasible <= x</code>, and <code>x</code>
-      is feasible, it holds that <code>x <= result</code>. */
-  def feasibilityBound(feasible : LatticeObject,
-                       infeasible : LatticeObject) : LatticeObject
+  //////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Assuming that <code>upper > lower</code>, check whether an object
+   * <code>result</code> exists such that <code>lower = meet(upper,
+   * result)</code>, and such that, whenever <code>lower <= x</code>
+   * but not <code>upper <= x</code>, it holds that <code>x <= result</code>.
+   */
+  def oneStepDifference(lower : LatticeObject,
+                        upper : LatticeObject) : Option[LatticeObject]
+
+  /**
+   * Compute a set S of feasible objects >= lowerBound that are
+   * (i) incomparable to comp, and
+   * (ii) S has the property that for every feasible object
+   * o >= lowerBound and o is incomparable to comp, there is an element
+   * u in S such that u <= o.
+   */
+//  def incomparableFeasibleObjects(lowerBound : LatticeObject, comp : LatticeObject)
+//                                 : Iterator[LatticeObject]
 
   //////////////////////////////////////////////////////////////////////////////
 
@@ -70,6 +83,12 @@ trait OptLattice[Label, Cost] extends Lattice[Label] {
       <code>isFeasible</code> method */
   def filter(pred : Label => Boolean) : OptLattice[Label, Cost] =
     FilteredLattice(this, pred)
+
+  /** Construct a dependent product */
+  def flatMap[Label1, Cost1]
+             (mapping : Label => OptLattice[Label1, Cost1])
+            : OptLattice[Label1, (Cost, Cost1)] =
+    new DependentProductLattice(this, mapping)
 
   def *[Label1, Cost1, That <: OptLattice[Label1, Cost1]] (that : That)
        : OptLattice[(Label, Label1), (Cost, Cost1)] =
