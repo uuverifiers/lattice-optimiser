@@ -80,16 +80,16 @@ class DependentProductLattice[LabelA, LabelB, CostA, CostB,
     b.getLabel(x._2.asInstanceOf[b.LatticeObject])
   }
 
-  def oneStepDifference(feasible : LatticeObject,
-                        infeasible : LatticeObject) : Option[LatticeObject] =
-    if (feasible._1 == infeasible._1) {
-      val b = bFun(a.getLabel(feasible._1))
-      for (x <- b.oneStepDifference(feasible._2.asInstanceOf[b.LatticeObject],
-                                    infeasible._2.asInstanceOf[b.LatticeObject]))
-      yield (a.bottom, x.asInstanceOf[BBaseObject])
-    } else if (feasible._2 == infeasible._2) {
-      for (x <- a.oneStepDifference(feasible._1, infeasible._1))
-      yield (x, bBaseLattice.bottom)
+  def oneStepDifference(lower : LatticeObject,
+                        upper : LatticeObject) : Option[LatticeObject] =
+    if (lower._1 == upper._1) {
+      val b = bFun(a.getLabel(lower._1))
+      for (x <- b.oneStepDifference(lower._2.asInstanceOf[b.LatticeObject],
+                                    upper._2.asInstanceOf[b.LatticeObject]))
+      yield (a.top, x.asInstanceOf[BBaseObject])
+    } else if (lower._2 == upper._2) {
+      for (x <- a.oneStepDifference(lower._1, upper._1))
+      yield (x, bBaseLattice.top)
     } else {
       None
     }

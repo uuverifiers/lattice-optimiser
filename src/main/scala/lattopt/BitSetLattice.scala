@@ -66,10 +66,10 @@ class BitSetLattice private (width : Int) extends OptLattice[BitSet, Int] {
 
   def nodeCount : BigInt = BigInt(1) << width
 
-  def oneStepDifference(feasible : LatticeObject,
-                        infeasible : LatticeObject) : Option[LatticeObject] = {
-    val step = feasible -- infeasible
-    if (step.size == 1) Some(step) else None
+  def oneStepDifference(lower : LatticeObject,
+                        upper : LatticeObject) : Option[LatticeObject] = {
+    val step = upper -- lower
+    if (step.size == 1) Some(top ^ step) else None
   }
 
   override def toString : String = "BitSetLattice(" + width + ")"

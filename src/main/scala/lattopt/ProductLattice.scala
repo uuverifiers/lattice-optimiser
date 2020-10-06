@@ -40,14 +40,14 @@ class ProductLattice[LabelA, LabelB, CostA, CostB,
   def join(x: LatticeObject, y: LatticeObject): LatticeObject =
       (a.join(x._1, y._1), b.join(x._2, y._2))
       
-  def oneStepDifference(feasible : LatticeObject,
-                        infeasible : LatticeObject) : Option[LatticeObject] =
-    if (feasible._1 == infeasible._1)
-      for (x <- b.oneStepDifference(feasible._2, infeasible._2))
-      yield (a.bottom, x)
-    else if (feasible._2 == infeasible._2)
-      for (x <- a.oneStepDifference(feasible._1, infeasible._1))
-      yield (x, b.bottom)
+  def oneStepDifference(lower : LatticeObject,
+                        upper : LatticeObject) : Option[LatticeObject] =
+    if (lower._1 == upper._1)
+      for (x <- b.oneStepDifference(lower._2, upper._2))
+      yield (a.top, x)
+    else if (lower._2 == upper._2)
+      for (x <- a.oneStepDifference(lower._1, upper._1))
+      yield (x, b.top)
     else
       None
 
