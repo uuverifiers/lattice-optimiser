@@ -72,6 +72,15 @@ class BitSetLattice private (width : Int) extends OptLattice[BitSet, Int] {
     if (step.size == 1) Some(top ^ step) else None
   }
 
+  def incomparableFeasibleObjects(lowerBound : LatticeObject, comp : LatticeObject)
+                                 : Iterator[LatticeObject] =
+    if (latticeOrder.lteq(comp, lowerBound))
+      Iterator.empty
+    else if (latticeOrder.lteq(lowerBound, comp))
+      for (t <- (top ^ comp).iterator) yield (lowerBound + t)
+    else
+      Iterator single lowerBound
+
   override def toString : String = "BitSetLattice(" + width + ")"
 
   sanityCheck

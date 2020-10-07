@@ -31,6 +31,10 @@ abstract class DelegatingOptLattice[Label, Cost, A <: OptLattice[_, _]]
                         infeasible : LatticeObject) : Option[LatticeObject] =
     underlying.oneStepDifference(feasible, infeasible)
 
+  def incomparableFeasibleObjects(lowerBound : LatticeObject, comp : LatticeObject)
+                                 : Iterator[LatticeObject] =
+    underlying.incomparableFeasibleObjects(lowerBound, comp)
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -105,6 +109,11 @@ class FilteredLattice[Label, Cost, A <: OptLattice[Label, Cost]] private
 
   override def isFeasible(x : LatticeObject) : Boolean =
     underlying.isFeasible(x) && pred(getLabel(x))
+
+  override def incomparableFeasibleObjects(lowerBound : LatticeObject,
+                                           comp : LatticeObject)
+                                         : Iterator[LatticeObject] =
+    underlying.incomparableFeasibleObjects(lowerBound, comp) filter isFeasible
 
   override def toString : String =
     "Filtered(" + underlying.toString + ")"

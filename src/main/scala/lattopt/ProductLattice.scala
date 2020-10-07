@@ -61,13 +61,99 @@ class ProductLattice[LabelA, LabelB, CostA, CostB,
      for (bp <- b.pred(x._2)) yield (x._1, bp))
      
   def isFeasible(x: LatticeObject) =       
-      a.isFeasible(x._1) && b.isFeasible(x._2)
+    a.isFeasible(x._1) && b.isFeasible(x._2)
  
   def toCost(x : LatticeObject) =
     (a.toCost(x._1), b.toCost(x._2))
     
   def getLabel(x : LatticeObject) =
     (a.getLabel(x._1), b.getLabel(x._2)) 
+
+  ///////////////////////////////////////////////////////////////////////////////////
+
+  /**
+     For c = comp:
+
+     o is comparable to c
+     <=>
+     !(o <= c) && !(o >= c)
+     <=>
+     !(o1 <= c1 && o2 <= c2) && !(o1 >= c1 && o2 >= c2)
+     <=>
+     (!(o1 <= c1) || !(o2 <= c2)) && (!(o1 >= c1) || !(o2 >= c2))
+
+     <=>
+     !(o1 <= c1) && !(o1 >= c1) ||
+     !(o2 <= c2) && !(o2 >= c2) ||
+     !(o1 <= c1) && !(o2 >= c2) ||
+     !(o1 >= c1) && !(o2 <= c2)
+
+     <=>
+     o1 and c1 are incomparable ||
+     o2 and c2 are incomparable ||
+     !(o1 <= c1) && !(o2 >= c2) ||
+     !(o1 >= c1) && !(o2 <= c2)
+
+     <=>
+     o1 and c1 are incomparable ||
+     o2 and c2 are incomparable ||
+     (o1 > c1) && (o2 < c2) ||
+     (o1 < c1) && (o2 > c2)
+
+   */
+  def incomparableFeasibleObjects(lowerBound : LatticeObject, comp : LatticeObject)
+                                : Iterator[LatticeObject] =
+    if (latticeOrder.lteq(comp, lowerBound)) {
+      Iterator.empty
+    } else if (latticeOrder.lteq(lowerBound, comp)) {
+
+      /*
+         Cover elements o such that
+         o1 and c1 are incomparable || o2 and c2 are incomparable
+       */
+  
+      val (lowerBound1, lowerBound2) = lowerBound
+      val (comp1,       comp2)       = comp
+
+      val incompLeft  = a.incomparableFeasibleObjects(lowerBound1, comp1)
+      val incompRight = b.incomparableFeasibleObjects(lowerBound2, comp2)
+  
+      /* (o1 < c1) && (o2 > c2) */
+      val allIncompRight =
+        if (a.latticeOrder.lt(lowerBound1, comp1)) {
+          val rightSuccessors =
+            b.join(lowerBound2, comp2) match {
+              case `comp2` => b succ comp2
+              case x       => Iterator single x
+            }
+
+          Util.minObjects(incompRight ++ (rightSuccessors filter b.isFeasible))(
+                          b.latticeOrder)
+        } else {
+          incompRight
+        }
+  
+      /* (o1 > c1) && (o2 < c2) */
+      val allIncompLeft =
+        if (b.latticeOrder.lt(lowerBound2, comp2)) {
+          val leftSuccessors =
+            a.join(lowerBound1, comp1) match {
+              case `comp1` => a succ comp1
+              case x       => Iterator single x
+            }
+
+          Util.minObjects(incompLeft ++ (leftSuccessors filter a.isFeasible))(
+                          a.latticeOrder)
+        } else {
+          incompLeft
+        }
+  
+      (for (x <- allIncompRight) yield (lowerBound1, x)) ++
+      (for (x <- allIncompLeft)  yield (x, lowerBound2))
+
+    } else {
+      Iterator single lowerBound
+    }
 
   sanityCheck
 

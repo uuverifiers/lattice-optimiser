@@ -1,33 +1,29 @@
 
 package lattopt;
 
+import scala.collection.immutable.BitSet
+
 object Main extends App {
 
   {
-  println("Lattice test 1")
+    println("Lattice test 1")
 
-  val lattice1 = BitSetLattice(8)
-  val lattice2 = for (x <- lattice1) yield (for (n <- x) yield (1 << n)).sum
+    val lattice1 = BitSetLattice(8)
+    val lattice2 = for (x <- lattice1) yield (for (n <- x) yield (1 << n)).sum
 
-  println(lattice1)
-  println(lattice2)
+    println(lattice1)
+    println(lattice2)
 
-  println(lattice2.getLabel(lattice2.bottom))
-  println(lattice2.getLabel(lattice2.top))
-
-  {
-    var x = lattice2.bottom
-    while (lattice2.succ(x).hasNext) {
-      x = lattice2.succ(x).next
-      println(lattice2.getLabel(x))
-    }
-  }
+    println(lattice1.incomparableFeasibleObjects(
+              BitSet(1).asInstanceOf[lattice1.LatticeObject],
+              // lattice1.bottom,
+              BitSet(1, 2).asInstanceOf[lattice1.LatticeObject]).toList)
   }
 
   println
 
   {
-  println("Lattice test 2")
+    println("Lattice test 2")
 
     val lattice1 =
       for (bv1 <- BitSetLattice(4);

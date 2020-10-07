@@ -94,6 +94,10 @@ class DependentProductLattice[LabelA, LabelB, CostA, CostB,
       None
     }
 
+  def incomparableFeasibleObjects(lowerBound : LatticeObject, comp : LatticeObject)
+                                : Iterator[LatticeObject] =
+    ???
+
   sanityCheck
 
 }
