@@ -1,6 +1,11 @@
 
 package lattopt;
 
+/**
+ * Products in which the second component can depend on the first
+ * component. This class is used to implement the <code>flatMap</code>
+ * method.
+ */
 class DependentProductLattice[LabelA, LabelB, CostA, CostB,
                               A <: OptLattice[LabelA, CostA],
                               B <: OptLattice[LabelB, CostB]]
@@ -46,7 +51,8 @@ class DependentProductLattice[LabelA, LabelB, CostA, CostB,
       }
  
     def lteq(x: LatticeObject, y: LatticeObject) =
-      a.latticeOrder.lteq(x._1, y._1) && bBaseLattice.latticeOrder.lteq(x._2, y._2)
+      a.latticeOrder.lteq(x._1, y._1) &&
+      bBaseLattice.latticeOrder.lteq(x._2, y._2)
   }
 
   def meet(x: LatticeObject, y: LatticeObject): LatticeObject =
@@ -94,9 +100,66 @@ class DependentProductLattice[LabelA, LabelB, CostA, CostB,
       None
     }
 
-  def incomparableFeasibleObjects(lowerBound : LatticeObject, comp : LatticeObject)
+  def incomparableFeasibleObjects(lowerBound : LatticeObject,
+                                  comp : LatticeObject)
                                 : Iterator[LatticeObject] =
-    ???
+    if (latticeOrder.lteq(comp, lowerBound)) {
+      Iterator.empty
+    } else if (latticeOrder.lteq(lowerBound, comp)) {
+
+      /*
+         Cover elements o such that
+         o1 and c1 are incomparable || o2 and c2 are incomparable
+       */
+  
+      val (lowerBound1, lowerBound2) = lowerBound
+      val (comp1,       comp2)       = comp
+
+      val b = bFun(a.getLabel(lowerBound1))
+
+      val lowerBound2_b = lowerBound2.asInstanceOf[b.LatticeObject]
+      val comp2_b       = comp2.asInstanceOf[b.LatticeObject]
+
+      val incompLeft    = a.incomparableFeasibleObjects(lowerBound1, comp1)
+      val incompRight   = b.incomparableFeasibleObjects(lowerBound2_b, comp2_b)
+
+      /* (o1 < c1) && (o2 > c2) */
+      val allIncompRight =
+        if (a.latticeOrder.lt(lowerBound1, comp1)) {
+          val rightSuccessors =
+            b.join(lowerBound2_b, comp2_b) match {
+              case `comp2_b` => b succ comp2_b
+              case x         => Iterator single x
+            }
+
+          Util.minObjects(incompRight ++ (rightSuccessors filter b.isFeasible))(
+                          b.latticeOrder)
+        } else {
+          incompRight
+        }
+  
+      /* (o1 > c1) && (o2 < c2) */
+      val allIncompLeft =
+        if (bBaseLattice.latticeOrder.lt(lowerBound2, comp2)) {
+          val leftSuccessors =
+            a.join(lowerBound1, comp1) match {
+              case `comp1` => a succ comp1
+              case x       => Iterator single x
+            }
+
+          Util.minObjects(incompLeft ++ (leftSuccessors filter a.isFeasible))(
+                          a.latticeOrder)
+        } else {
+          incompLeft
+        }
+  
+      (for (x <- allIncompRight) yield (lowerBound1,
+                                        x.asInstanceOf[BBaseObject])) ++
+      (for (x <- allIncompLeft)  yield (x, lowerBound2))
+
+    } else {
+      Iterator single lowerBound
+    }
 
   sanityCheck
 

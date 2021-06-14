@@ -101,7 +101,8 @@ class ProductLattice[LabelA, LabelB, CostA, CostB,
      (o1 < c1) && (o2 > c2)
 
    */
-  def incomparableFeasibleObjects(lowerBound : LatticeObject, comp : LatticeObject)
+  def incomparableFeasibleObjects(lowerBound : LatticeObject,
+                                  comp : LatticeObject)
                                 : Iterator[LatticeObject] =
     if (latticeOrder.lteq(comp, lowerBound)) {
       Iterator.empty

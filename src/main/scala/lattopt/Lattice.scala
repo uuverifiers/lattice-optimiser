@@ -69,7 +69,8 @@ trait OptLattice[Label, Cost] extends Lattice[Label] {
    * o >= lowerBound and o is incomparable to comp, there is an element
    * u in S such that u <= o.
    */
-  def incomparableFeasibleObjects(lowerBound : LatticeObject, comp : LatticeObject)
+  def incomparableFeasibleObjects(lowerBound : LatticeObject,
+                                  comp : LatticeObject)
                                  : Iterator[LatticeObject]
 
   //////////////////////////////////////////////////////////////////////////////
