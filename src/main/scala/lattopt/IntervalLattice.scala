@@ -70,4 +70,8 @@ class IntervalLattice protected (lowerLimit : BigInt, upperLimit : BigInt)
   def pred(x: (Option[BigInt], Option[BigInt])): Iterator[(Option[BigInt], Option[BigInt])] = ???
   def succ(x: (Option[BigInt], Option[BigInt])): Iterator[(Option[BigInt], Option[BigInt])] = ???
 
+  def objectIterator : Iterator[LatticeObject] = ???
+
+  def feasibleObjectIterator : Iterator[LatticeObject] = ???
+
 }

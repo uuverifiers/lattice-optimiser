@@ -15,16 +15,25 @@ object DependentProductLatticeTests extends Properties("DependentProductLattice"
     lattice1.isFeasible(lattice1.bottom) &&
     !lattice1.isFeasible(lattice1.top) && {
       val lb = (lattice1 succ lattice1.bottom).next
-      val comp = (lattice1 succ lb).next
-      val incomps = lattice1.incomparableFeasibleObjects(lb, comp).toList
-      (incomps forall {
-         x =>
-         lattice1.latticeOrder.lteq(lb, x) &&
-         lattice1.latticeOrder.tryCompare(comp, x).isEmpty &&
-         lattice1.isFeasible(x)
-       })
-      // TODO: check that the returned incomparable objects cover all feasible
-      // incomparable objects
+      (lattice1 succ lb) forall {
+        comp =>
+        val incomps = lattice1.incomparableFeasibleObjects(lb, comp).toList
+        (incomps forall {
+           x =>
+           lattice1.latticeOrder.lteq(lb, x) &&
+           lattice1.latticeOrder.tryCompare(comp, x).isEmpty &&
+           lattice1.isFeasible(x) &&
+           (incomps forall {
+              y => x == y || lattice1.latticeOrder.tryCompare(x, y).isEmpty })
+         }) && (
+          lattice1.feasibleObjectIterator forall {
+            x =>
+            !lattice1.latticeOrder.lteq(lb, x) ||
+            !lattice1.latticeOrder.tryCompare(comp, x).isEmpty ||
+            (incomps exists { y => lattice1.latticeOrder.lteq(y, x) })
+          }
+        )
+      }
     }
   }
 

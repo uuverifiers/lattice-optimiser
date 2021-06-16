@@ -69,7 +69,12 @@ class ProductLattice[LabelA, LabelB, CostA, CostB,
   def getLabel(x : LatticeObject) =
     (a.getLabel(x._1), b.getLabel(x._2)) 
 
-  ///////////////////////////////////////////////////////////////////////////////////
+  def objectIterator : Iterator[LatticeObject] =
+    for (x <- a.objectIterator; y <- b.objectIterator) yield (x, y)
+
+  def feasibleObjectIterator : Iterator[LatticeObject] = objectIterator
+
+  //////////////////////////////////////////////////////////////////////////////
 
   /**
      For c = comp:

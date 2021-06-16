@@ -30,12 +30,22 @@ trait Lattice[Label] {
 
   /** Number of nodes of this lattice */
   def nodeCount : BigInt
+
+  /** Iterate over the objects (represented via their labels) of this
+    * lattice */
+  def iterator : Iterator[Label] =
+    objectIterator map getLabel
+
+  /** Iterate over the objects of this lattice */
+  def objectIterator : Iterator[LatticeObject]
 }
 
 /**
  * The parent of all optimisation lattices. Each optimisation lattice
  * is a lattice, and has in addition a <code>Cost</code> type defining
- * the range of the objective function.
+ * the range of the objective function. The <code>isFeasible</code>
+ * function defines which of the objects of the lattice are considered
+ * during search and optimisation.
  */
 trait OptLattice[Label, Cost] extends Lattice[Label] {
 
@@ -50,6 +60,14 @@ trait OptLattice[Label, Cost] extends Lattice[Label] {
     super.sanityCheck
     assert(isFeasible(bottom))
   }
+
+  /** Iterate over the feasible objects (represented via their labels)
+    * of this lattice */
+  def feasibleIterator : Iterator[Label] =
+    feasibleObjectIterator map getLabel
+
+  /** Iterate over the feasible objects of this lattice */
+  def feasibleObjectIterator : Iterator[LatticeObject]
 
   //////////////////////////////////////////////////////////////////////////////
 

@@ -2,6 +2,7 @@
 package lattopt;
 
 import scala.collection.immutable.BitSet
+import scala.collection.mutable.{BitSet => MBitSet}
 
 object BitSetLattice {
 
@@ -82,6 +83,23 @@ class BitSetLattice private (width : Int) extends OptLattice[BitSet, Int] {
       Iterator single lowerBound
 
   override def toString : String = "BitSetLattice(" + width + ")"
+
+  def objectIterator : Iterator[LatticeObject] = new Iterator[BitSet] {
+    private val cur = new MBitSet
+    def hasNext = !cur(width)
+    def next = {
+      val r = cur.toImmutable
+      var n = 0
+      while (cur(n)) {
+        cur -= n
+        n = n + 1
+      }
+      cur += n
+      r
+    }
+  }
+
+  def feasibleObjectIterator = objectIterator
 
   sanityCheck
 

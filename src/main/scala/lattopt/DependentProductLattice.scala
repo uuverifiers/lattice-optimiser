@@ -86,6 +86,15 @@ class DependentProductLattice[LabelA, LabelB, CostA, CostB,
     b.getLabel(x._2.asInstanceOf[b.LatticeObject])
   }
 
+  def objectIterator : Iterator[LatticeObject] =
+    for (x <- a.objectIterator; y <- bBaseLattice.objectIterator)
+    yield (x, y)
+
+  def feasibleObjectIterator : Iterator[LatticeObject] =
+    for (x <- a.feasibleObjectIterator;
+         y <- bFun(a.getLabel(x)).feasibleObjectIterator)
+    yield (x, y.asInstanceOf[BBaseObject])
+
   def oneStepDifference(lower : LatticeObject,
                         upper : LatticeObject) : Option[LatticeObject] =
     if (lower._1 == upper._1) {
