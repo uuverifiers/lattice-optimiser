@@ -81,11 +81,13 @@ trait OptLattice[Label, Cost] extends Lattice[Label] {
                         upper : LatticeObject) : Option[LatticeObject]
 
   /**
-   * Compute a set S of feasible objects >= lowerBound that are
-   * (i) incomparable to comp, and
-   * (ii) S has the property that for every feasible object
-   * o >= lowerBound and o is incomparable to comp, there is an element
-   * u in S such that u <= o.
+   * Given a feasible element <code>lowerBound</code>, compute a set
+   * <code>S</code> of feasible objects <code>&gt;= lowerBound</code>
+   * that are <ol> <li> incomparable to <code>comp</code>, and</li>
+   * <li> <code>S</code> has the property that for every feasible
+   * object <code>o &gt;= lowerBound</code> and <code>o</code> is
+   * incomparable to <code>comp</code>, there is an element <code>u in
+   * S</code> such that <code>u &lt;= o</code>. </li>  </ol>.
    */
   def incomparableFeasibleObjects(lowerBound : LatticeObject,
                                   comp : LatticeObject)
