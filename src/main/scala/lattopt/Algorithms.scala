@@ -37,6 +37,8 @@ object Algorithms {
       }
     }
 
+    // TODO: filter objects based on previously returned objects
+
     incompHelp(lowerBound, compsSorted)
   }
 

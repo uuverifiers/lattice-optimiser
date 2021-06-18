@@ -74,4 +74,10 @@ class IntervalLattice protected (lowerLimit : BigInt, upperLimit : BigInt)
 
   def feasibleObjectIterator : Iterator[LatticeObject] = ???
 
+  def intermediate(lower : LatticeObject,
+                   upper : LatticeObject,
+                   position : Double)
+                  (implicit randomData : RandomDataSource)
+                : LatticeObject = ???
+
 }

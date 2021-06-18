@@ -25,6 +25,13 @@ abstract class DelegatingOptLattice[Label, Cost, A <: OptLattice[_, _]]
   def pred(x: LatticeObject): Iterator[LatticeObject] =
     underlying.pred(x)
 
+  def intermediate(lower : LatticeObject,
+                   upper : LatticeObject,
+                   position : Double)
+                  (implicit randomData : RandomDataSource)
+                : LatticeObject =
+    underlying.intermediate(lower, upper, position)
+
   def nodeCount : BigInt = underlying.nodeCount
 
   def oneStepDifference(feasible : LatticeObject,
@@ -164,6 +171,13 @@ class InvertedLattice[Label, A <: Lattice[Label]] (val underlying : A)
   /** Compute the direct children/predecessors of an object */
   override def pred(x: LatticeObject): Iterator[LatticeObject] =
     underlying.succ(x)
+
+  def intermediate(lower : LatticeObject,
+                   upper : LatticeObject,
+                   position : Double)
+                  (implicit randomData : RandomDataSource)
+                : LatticeObject =
+    underlying.intermediate(upper, lower, 1.0 - position)
 
   def nodeCount : BigInt = underlying.nodeCount
 

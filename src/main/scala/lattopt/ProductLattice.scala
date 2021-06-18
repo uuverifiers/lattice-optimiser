@@ -59,6 +59,14 @@ class ProductLattice[LabelA, LabelB, CostA, CostB,
   def pred(x: LatticeObject): Iterator[LatticeObject] =
     (for (ap <- a.pred(x._1)) yield (ap, x._2)) ++ (
      for (bp <- b.pred(x._2)) yield (x._1, bp))
+
+  def intermediate(lower : LatticeObject,
+                   upper : LatticeObject,
+                   position : Double)
+                  (implicit randomData : RandomDataSource)
+                : LatticeObject =
+    (a.intermediate(lower._1, upper._1, position),
+     b.intermediate(lower._2, upper._2, position))
      
   def isFeasible(x: LatticeObject) =       
     a.isFeasible(x._1) && b.isFeasible(x._2)

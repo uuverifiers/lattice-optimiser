@@ -59,6 +59,21 @@ class BitSetLattice private (width : Int) extends OptLattice[BitSet, Int] {
   def pred(obj: LatticeObject) : Iterator[LatticeObject] =
     for (t <- obj.iterator) yield (obj - t)
 
+  def intermediate(lower : LatticeObject,
+                   upper : LatticeObject,
+                   position : Double)
+                  (implicit randomData : RandomDataSource)
+                : LatticeObject = {
+    val res = new MBitSet
+    res ++= lower
+
+    for (ind <- lower &~ upper)
+      if (randomData.nextDouble <= position)
+        res += ind
+
+    res.toImmutable
+  }
+
   def getLabel(x : LatticeObject) : BitSet = x
 
   def toCost(x : LatticeObject) : Int = x.size

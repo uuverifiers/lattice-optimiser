@@ -20,13 +20,23 @@ trait Lattice[Label] {
   /** Compute the direct children/predecessors of an object */
   def pred(x: LatticeObject): Iterator[LatticeObject]
 
+  /**
+   * Randomly pick an element between <code>lower</code> and
+   * <code>upper</code>. The <code>position</code> value determines
+   * how far the element can be expected to be from <code>lower</code>
+   * and <code>upper</code>; for <code>position == 0.0</code>, the
+   * returned element will be equal to <code>lower</code>, for
+   * <code>position == 1.0</code> it will be equal to
+   * <code>upper</code>.
+   */
+  def intermediate(lower : LatticeObject,
+                   upper : LatticeObject,
+                   position : Double)
+                  (implicit randomData : RandomDataSource)
+                : LatticeObject
+
   /** Map a lattice object to the corresponding foreground object */
   def getLabel(x : LatticeObject) : Label
-
-  /** Check whether the lattice is well-defined **/
-  protected def sanityCheck {
-    assert(latticeOrder.gteq(top, bottom))
-  }
 
   /** Number of nodes of this lattice */
   def nodeCount : BigInt
@@ -38,6 +48,11 @@ trait Lattice[Label] {
 
   /** Iterate over the objects of this lattice */
   def objectIterator : Iterator[LatticeObject]
+
+  /** Check whether the lattice is well-defined **/
+  protected def sanityCheck {
+    assert(latticeOrder.gteq(top, bottom))
+  }
 }
 
 /**
