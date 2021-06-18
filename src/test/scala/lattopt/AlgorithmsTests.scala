@@ -4,10 +4,14 @@ import org.scalacheck.Properties
 
 object AlgorithmsTests extends Properties("Algorithms") {
 
-    val lattice1 =
-      for (bv1 <- BitSetLattice(4); bv2 <- BitSetLattice(6);
-           if !bv1(0) || !bv2(0))
-      yield (bv1, bv2, bv1.size + bv2.size)
+  val lattice1 =
+    for (bv1 <- BitSetLattice(4); bv2 <- BitSetLattice(6);
+         if !bv1(0) || !bv2(0))
+    yield (bv1, bv2, bv1.size + bv2.size)
+  val lattice2 =
+    for (bv1 <- BitSetLattice(16); bv2 <- BitSetLattice(32);
+         if !bv1(0) || !bv2(0) || !bv2(5))
+    yield (bv1, bv2, bv1.size + bv2.size)
 
   property("incomparableFeasibleObjects1") = {
 
@@ -48,6 +52,18 @@ object AlgorithmsTests extends Properties("Algorithms") {
 
     correctIncomps(lattice1)(lb, comps, incomps)
 
+  }
+
+  property("maximize1") = {
+    (0 until 10) forall { seed =>
+      implicit val randomData = new SeededRandomDataSource(seed)
+
+      val obj = (lattice2 succ lattice2.bottom).next
+      val maxObj = Algorithms.maximize(lattice2)(obj)
+      val (bv1, bv2, size) = lattice2 getLabel maxObj
+
+      (!bv1(0) || !bv2(0) || !bv2(5)) && size == 47
+    }
   }
 
   def correctIncomps(lattice : OptLattice[_, _])

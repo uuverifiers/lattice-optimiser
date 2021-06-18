@@ -42,4 +42,59 @@ object Algorithms {
     incompHelp(lowerBound, compsSorted)
   }
 
+  /**
+   * Given a feasible object <code>obj</code>, find a maximal feasible
+   * object above <code>obj</code>.
+   */
+  def maximize[A <: OptLattice[_, _]]
+              (lattice : A)
+              (obj : lattice.LatticeObject)
+              (implicit randomData : RandomDataSource)
+             : lattice.LatticeObject = {
+    assert(lattice isFeasible obj)
+
+    var current    = obj
+    var upperBound = lattice.top
+    var stepSize   = 0.5
+
+    while (current != upperBound) {
+      val next = lattice.intermediate(current, upperBound, stepSize)
+
+      val diffNext = next != current
+      if (diffNext && (lattice isFeasible next)) {
+        current = next
+        if (stepSize < 0.5)
+          stepSize = stepSize * 2.0
+      } else {
+        if (diffNext) {
+          for (newBound <- lattice.oneStepDifference(current, next))
+            upperBound = lattice.meet(upperBound, newBound)
+          stepSize = stepSize / 2.0
+        }
+
+        // try to go just one step then
+        val it = lattice succ current
+        
+        var found = false
+        while (!found && it.hasNext) {
+          val next = it.next
+          if (lattice.latticeOrder.lteq(next, upperBound)) {
+            if (lattice isFeasible next) {
+              current = next
+              found = true
+            } else {
+              for (newBound <- lattice.oneStepDifference(current, next))
+                upperBound = lattice.meet(upperBound, newBound)
+            }
+          }
+        }
+
+        if (!found)
+          upperBound = current
+      }
+    }
+
+    current
+  }
+
 }

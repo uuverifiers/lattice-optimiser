@@ -67,7 +67,7 @@ class BitSetLattice private (width : Int) extends OptLattice[BitSet, Int] {
     val res = new MBitSet
     res ++= lower
 
-    for (ind <- lower &~ upper)
+    for (ind <- upper &~ lower)
       if (randomData.nextDouble <= position)
         res += ind
 
