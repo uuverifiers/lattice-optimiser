@@ -1,7 +1,43 @@
 package lattopt;
 
+import scala.collection.mutable.ArrayBuffer
 
 object Algorithms {
+
+  /**
+   * Enumerate all maximal feasible objects above
+   * <code>lowerBound</code>.
+   */
+  def maximalFeasibleObjects[A <: OptLattice[_, _]]
+                            (lattice : A)
+                            (lowerBound : lattice.LatticeObject)
+                            (implicit randomData : RandomDataSource)
+                           : Iterator[lattice.LatticeObject] =
+    new Iterator[lattice.LatticeObject] {
+      import lattice.{LatticeObject => LObject}
+
+      private val results = new ArrayBuffer[LObject]
+      private var start : Option[LObject] = null
+
+      private def setStart : Unit =
+        if (start == null)
+          start =
+            incomparableFeasibleObjects(lattice)(lowerBound,
+                                                 results.toSeq).find(x => true)
+
+      def hasNext = {
+        setStart
+        start.isDefined
+      }
+
+      def next = {
+        setStart
+        val res = maximize(lattice)(start.get)
+        start = null
+        results += res
+        res
+      }
+    }
 
   /**
    * Given a feasible element <code>lowerBound</code>, compute a set

@@ -170,9 +170,12 @@ class DependentProductLattice[LabelA, LabelB, CostA, CostB,
           incompLeft
         }
   
-      (for (x <- allIncompRight) yield (lowerBound1,
-                                        x.asInstanceOf[BBaseObject])) ++
-      (for (x <- allIncompLeft)  yield (x, lowerBound2))
+      (for (x <- allIncompRight)
+       yield (lowerBound1, x.asInstanceOf[BBaseObject])) ++
+      (for (x <- allIncompLeft;
+            b = bFun(a.getLabel(x));
+            if b isFeasible lowerBound2.asInstanceOf[b.LatticeObject])
+       yield (x, lowerBound2))
 
     } else {
       Iterator single lowerBound

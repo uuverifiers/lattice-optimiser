@@ -66,6 +66,18 @@ object AlgorithmsTests extends Properties("Algorithms") {
     }
   }
 
+  property("optimize1") = {
+    (0 until 3) forall { seed =>
+      implicit val randomData = new SeededRandomDataSource(seed)
+
+      val result =
+        Algorithms.maximalFeasibleObjects(lattice2)(lattice2.bottom).toList
+
+      result.size == 3 &&
+      (result reduceLeft lattice2.join) == lattice2.top
+    }
+  }
+
   def correctIncomps(lattice : OptLattice[_, _])
                     (lb : lattice.LatticeObject,
                      comps : Seq[lattice.LatticeObject],
