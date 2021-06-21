@@ -78,6 +78,18 @@ object AlgorithmsTests extends Properties("Algorithms") {
     }
   }
 
+  property("maxMeet") = {
+    (0 until 3) forall { seed =>
+      implicit val randomData = new SeededRandomDataSource(seed)
+
+      val result =
+        Algorithms.maximalFeasibleObjectMeet(lattice2)(lattice2.bottom)
+      val (bv1, bv2, size) = lattice2 getLabel result
+
+      (!bv1(0) && !bv2(0) && !bv2(5)) && size == 45
+    }
+  }
+
   def correctIncomps(lattice : OptLattice[_, _])
                     (lb : lattice.LatticeObject,
                      comps : Seq[lattice.LatticeObject],
