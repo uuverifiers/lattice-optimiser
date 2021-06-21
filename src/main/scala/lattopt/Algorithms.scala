@@ -51,7 +51,7 @@ object Algorithms {
     val blocked     = new ArrayBuffer[lattice.LatticeObject]
     var currentMeet = lattice.top
 
-    var cont = true
+    var cont = (currentMeet != lowerBound)
     while (cont) {
       val it = incomparableFeasibleObjects(lattice)(lowerBound, blocked)
       if (it.hasNext) {
@@ -60,6 +60,7 @@ object Algorithms {
           case Left(maximal) => {
             currentMeet = lattice.meet(currentMeet, maximal)
             blocked += maximal
+            cont = (currentMeet != lowerBound)
           }
           case Right(nonMax) => {
             blocked += nonMax

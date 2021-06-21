@@ -8,10 +8,16 @@ object AlgorithmsTests extends Properties("Algorithms") {
     for (bv1 <- BitSetLattice(4); bv2 <- BitSetLattice(6);
          if !bv1(0) || !bv2(0))
     yield (bv1, bv2, bv1.size + bv2.size)
+
   val lattice2 =
     for (bv1 <- BitSetLattice(16); bv2 <- BitSetLattice(32);
          if !bv1(0) || !bv2(0) || !bv2(5))
     yield (bv1, bv2, bv1.size + bv2.size)
+
+  val lattice3 =
+    for (bv1 <- BitSetLattice(20);
+         if ((0 until 10) forall { ind => !bv1(2*ind) || !bv1(2*ind + 1) }))
+    yield bv1
 
   property("incomparableFeasibleObjects1") = {
 
@@ -78,7 +84,7 @@ object AlgorithmsTests extends Properties("Algorithms") {
     }
   }
 
-  property("maxMeet") = {
+  property("maxMeet1") = {
     (0 until 3) forall { seed =>
       implicit val randomData = new SeededRandomDataSource(seed)
 
@@ -88,6 +94,16 @@ object AlgorithmsTests extends Properties("Algorithms") {
 
       (!bv1(0) && !bv2(0) && !bv2(5)) && size == 45
     }
+  }
+
+  property("maxMeet2") = {
+    implicit val randomData = new SeededRandomDataSource(123)
+
+    val result =
+      Algorithms.maximalFeasibleObjectMeet(lattice3)(lattice3.bottom)
+    val bv1 = lattice3 getLabel result
+
+    bv1.isEmpty
   }
 
   def correctIncomps(lattice : OptLattice[_, _])

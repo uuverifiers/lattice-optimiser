@@ -121,19 +121,60 @@ class FilteredLattice[Label, Cost, A <: OptLattice[Label, Cost]] private
                      (underlying1 : A, val pred : Label => Boolean)
      extends SameTypeDelegatingOptLattice[Label, Cost, A](underlying1) {
 
+  private def evalPred(obj : LatticeObject) = pred(getLabel(obj))
+
   override def isFeasible(x : LatticeObject) : Boolean =
-    underlying.isFeasible(x) && pred(getLabel(x))
+    underlying.isFeasible(x) && evalPred(x)
 
   override def incomparableFeasibleObjects(lowerBound : LatticeObject,
                                            comp : LatticeObject)
                                          : Iterator[LatticeObject] =
-    underlying.incomparableFeasibleObjects(lowerBound, comp) filter isFeasible
+    underlying.incomparableFeasibleObjects(lowerBound, comp) filter evalPred
 
   override def toString : String =
     "Filtered(" + underlying.toString + ")"
 
   override def feasibleObjectIterator : Iterator[LatticeObject] =
-    underlying.feasibleObjectIterator filter { obj => pred(getLabel(obj)) }
+    underlying.feasibleObjectIterator filter evalPred
+
+  sanityCheck
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+object CachedFilteredLattice {
+  def apply[Label, Cost]
+           (underlying : OptLattice[Label, Cost], pred : Label => Boolean)
+          : OptLattice[Label, Cost] =
+    new CachedFilteredLattice(underlying, pred)
+}
+
+class CachedFilteredLattice[Label, Cost, A <: OptLattice[Label, Cost]] private
+                           (underlying1 : A, val pred : Label => Boolean)
+     extends SameTypeDelegatingOptLattice[Label, Cost, A](underlying1) {
+
+  private val predCache =
+    new PredicateCache[A, underlying.LatticeObject](underlying) {
+      def predicate(obj : underlying.LatticeObject) : Boolean =
+        !pred(underlying.getLabel(obj))
+    }
+
+  private def evalPred(obj : LatticeObject) = !predCache(obj)
+
+  override def isFeasible(x : LatticeObject) : Boolean =
+    underlying.isFeasible(x) && evalPred(x)
+
+  override def incomparableFeasibleObjects(lowerBound : LatticeObject,
+                                           comp : LatticeObject)
+                                         : Iterator[LatticeObject] =
+    underlying.incomparableFeasibleObjects(lowerBound, comp) filter evalPred
+
+  override def toString : String =
+    "CachedFiltered(" + underlying.toString + ")"
+
+  override def feasibleObjectIterator : Iterator[LatticeObject] =
+    underlying.feasibleObjectIterator filter evalPred
 
   sanityCheck
 
@@ -142,7 +183,8 @@ class FilteredLattice[Label, Cost, A <: OptLattice[Label, Cost]] private
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Inverted lattice in which <code>top</code> and <code>bottom</code> are swappepd.
+ * Inverted lattice in which <code>top</code> and <code>bottom</code>
+ * are swappepd.
  */
 class InvertedLattice[Label, A <: Lattice[Label]] (val underlying : A)
       extends Lattice[Label] {

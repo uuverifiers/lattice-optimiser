@@ -3,12 +3,11 @@ package lattopt;
 import scala.collection.mutable.ArrayBuffer
 
 object PredicateCache {
-  def apply[Label, A <: Lattice[Label]]
+  def apply[A <: Lattice[_]]
            (_lattice : A)
            (pred : _lattice.LatticeObject => Boolean) =
-    new PredicateCache[Label, A](_lattice) {
-      def predicate(obj : lattice.LatticeObject) =
-        pred(obj.asInstanceOf[_lattice.LatticeObject])
+    new PredicateCache[A, _lattice.LatticeObject](_lattice) {
+      def predicate(obj : _lattice.LatticeObject) = pred(obj)
     }
 }
 
@@ -20,22 +19,23 @@ object PredicateCache {
  * 
  * TODO: optimise the class using decision trees.
  */
-abstract class PredicateCache[Label, A <: Lattice[Label]]
+abstract class PredicateCache[A <: Lattice[_], LObject]
                              (protected val lattice : A) {
 
   import lattice.{LatticeObject, latticeOrder}
 
-  def predicate(obj : LatticeObject) : Boolean
+  def predicate(obj : LObject) : Boolean
 
   private val trueBounds, falseBounds = new ArrayBuffer[LatticeObject]
 
-  def apply(obj : LatticeObject) : Boolean =
+  def apply(_obj : LObject) : Boolean = {
+    val obj = _obj.asInstanceOf[LatticeObject]
     if (trueBounds exists (latticeOrder.lteq(_, obj))) {
       true
     } else if (falseBounds exists (latticeOrder.lteq(obj, _))) {
       false
     } else {
-      predicate(obj) match {
+      predicate(_obj) match {
         case false => {
           falseBounds += obj
           false
@@ -46,5 +46,6 @@ abstract class PredicateCache[Label, A <: Lattice[Label]]
         }
       }
     }
+  }
 
 }
