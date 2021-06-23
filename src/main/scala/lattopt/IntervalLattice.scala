@@ -26,6 +26,31 @@ class IntervalLattice protected (lowerLimit : BigInt, upperLimit : BigInt)
   private def neg(x : Option[BigInt]) : Option[BigInt] =
     for (a <- x) yield -a
 
+  private def min(x : Option[BigInt], y : Option[BigInt]) =
+    for (a <- x; b <- y) yield (a min b)
+
+  private def min2(x : Option[BigInt], y : Option[BigInt]) =
+    (x, y) match {
+      case (None, None)       => None
+      case (Some(a), None)    => Some(a)
+      case (None, Some(a))    => Some(a)
+      case (Some(a), Some(b)) => Some(a min b)
+    }
+
+  private def max(x : Option[BigInt], y : Option[BigInt]) =
+    for (a <- x; b <- y) yield (a max b)
+
+  private def max2(x : Option[BigInt], y : Option[BigInt]) =
+    (x, y) match {
+      case (None, None)       => None
+      case (Some(a), None)    => Some(a)
+      case (None, Some(a))    => Some(a)
+      case (Some(a), Some(b)) => Some(a max b)
+    }
+  private def canonise(o : LatticeObject) : LatticeObject =
+    if (isEmpty(o)) bottom else o
+
+
   // normal partial order
   val latticeOrder: PartialOrdering[(Option[BigInt], Option[BigInt])] = new PartialOrdering[LatticeObject] {
     def compareLower(x: Option[BigInt],
@@ -64,10 +89,25 @@ class IntervalLattice protected (lowerLimit : BigInt, upperLimit : BigInt)
   }
 
   def getLabel(x: (Option[BigInt], Option[BigInt]))  = x
-  def join(x: (Option[BigInt], Option[BigInt]),y: (Option[BigInt], Option[BigInt])): (Option[BigInt], Option[BigInt]) = ???
-  def meet(x: (Option[BigInt], Option[BigInt]),y: (Option[BigInt], Option[BigInt])): (Option[BigInt], Option[BigInt]) = ???
+
+  def join(x: (Option[BigInt], Option[BigInt]),y: (Option[BigInt], Option[BigInt])): (Option[BigInt], Option[BigInt]) =
+    if (isEmpty(x))
+      y
+    else if (isEmpty(y))
+      x
+    else
+      canonise((min(x._1, y._1), max(x._2, y._2)))
+
+  def meet(x: (Option[BigInt], Option[BigInt]),y: (Option[BigInt], Option[BigInt])): (Option[BigInt], Option[BigInt]) =
+    if (isEmpty(x) || isEmpty(y))
+      bottom
+    else
+      canonise((max2(x._1, y._1), min2(x._2, y._2)))
+
   def nodeCount: BigInt = ???
+
   def pred(x: (Option[BigInt], Option[BigInt])): Iterator[(Option[BigInt], Option[BigInt])] = ???
+
   def succ(x: (Option[BigInt], Option[BigInt])): Iterator[(Option[BigInt], Option[BigInt])] = ???
 
   def objectIterator : Iterator[LatticeObject] = ???
