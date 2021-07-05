@@ -143,6 +143,32 @@ class FilteredLattice[Label, Cost, A <: OptLattice[Label, Cost]] private
 
 ////////////////////////////////////////////////////////////////////////////////
 
+abstract class ObjectFilteredLattice[Label, Cost, A <: OptLattice[Label, Cost]]
+                                    (underlying1 : A)
+         extends SameTypeDelegatingOptLattice[Label, Cost, A](underlying1) {
+
+  def filteringPred(x : LatticeObject) : Boolean
+
+  override def isFeasible(x : LatticeObject) : Boolean =
+    underlying.isFeasible(x) && filteringPred(x)
+
+  override def incomparableFeasibleObjects(lowerBound : LatticeObject,
+                                           comp : LatticeObject)
+                                         : Iterator[LatticeObject] =
+    underlying.incomparableFeasibleObjects(lowerBound, comp) filter filteringPred
+
+  override def toString : String =
+    "Filtered(" + underlying.toString + ")"
+
+  override def feasibleObjectIterator : Iterator[LatticeObject] =
+    underlying.feasibleObjectIterator filter filteringPred
+
+  sanityCheck
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 object CachedFilteredLattice {
   def apply[Label, Cost]
            (underlying : OptLattice[Label, Cost], pred : Label => Boolean)

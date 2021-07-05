@@ -120,6 +120,18 @@ trait OptLattice[Label, Cost] extends Lattice[Label] {
   def filter(pred : Label => Boolean) : OptLattice[Label, Cost] =
     FilteredLattice(this, pred)
 
+  /** Filter out objects of the lattice by updating the
+      <code>isFeasible</code> method */
+  def filterObjects(p : LatticeObject => Boolean) : OptLattice[Label, Cost] =
+    new ObjectFilteredLattice[Label, Cost, this.type](this) {
+      def filteringPred(x : LatticeObject) : Boolean = p(x)
+    }
+
+  /** Filter out objects of the lattice by updating the
+      <code>isFeasible</code> method */
+  def cachedFilter(pred : Label => Boolean) : OptLattice[Label, Cost] =
+    CachedFilteredLattice(this, pred)
+
   /** Construct a dependent product */
   def flatMap[Label1, Cost1]
              (mapping : Label => OptLattice[Label1, Cost1])
