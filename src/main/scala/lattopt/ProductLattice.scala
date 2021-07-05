@@ -34,6 +34,8 @@ class ProductLattice[LabelA, LabelB, CostA, CostB,
       a.latticeOrder.lteq(x._1, y._1) && b.latticeOrder.lteq(x._2, y._2)
   }
 
+  val costOrder = Ordering.Tuple2(a.costOrder, b.costOrder)
+
   def meet(x: LatticeObject, y: LatticeObject): LatticeObject =
       (a.meet(x._1, y._1), b.meet(x._2, y._2))
 

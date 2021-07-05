@@ -167,4 +167,6 @@ class IntervalLattice protected (lowerLimit : BigInt, upperLimit : BigInt)
                   (implicit randomData : RandomDataSource)
                 : LatticeObject = ???
 
+  sanityCheck
+
 }

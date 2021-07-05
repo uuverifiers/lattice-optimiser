@@ -47,6 +47,8 @@ class BitSetLattice private (width : Int) extends OptLattice[BitSet, Int] {
       x subsetOf y
   }
 
+  val costOrder = Ordering.Int
+
   val top    = BitSet(0 until width : _*)
   val bottom = BitSet()
 

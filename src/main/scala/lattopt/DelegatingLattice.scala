@@ -6,7 +6,6 @@ abstract class DelegatingOptLattice[Label, Cost, A <: OptLattice[_, _]]
          extends OptLattice[Label, Cost] {
 
   type LatticeObject = underlying.LatticeObject
-//  override def toString = underlying.toString
 
   val top : LatticeObject = underlying.top
   val bottom : LatticeObject = underlying.bottom
@@ -57,6 +56,8 @@ class SameTypeDelegatingOptLattice[Label, Cost, A <: OptLattice[Label, Cost]]
                                   (underlying1 : A)
       extends DelegatingOptLattice[Label, Cost, A](underlying1) {
 
+  val costOrder = underlying.costOrder
+
   def getLabel(x : LatticeObject) : Label =
     underlying.getLabel(x)
 
@@ -88,6 +89,8 @@ class RelabeledLattice[Label, Label1, Cost, A <: OptLattice[Label, Cost]] privat
                       (underlying1 : A, val mapping : Label => Label1)
       extends DelegatingOptLattice[Label1, Cost, A](underlying1) {
 
+  val costOrder = underlying.costOrder
+
   def getLabel(x : LatticeObject) : Label1 =
     mapping(underlying.getLabel(x))
 
@@ -99,6 +102,48 @@ class RelabeledLattice[Label, Label1, Cost, A <: OptLattice[Label, Cost]] privat
 
   override def toString : String =
     "Relabeled(" + underlying.toString + ")"
+
+  sanityCheck
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+/*
+object ReCostedLattice {
+
+  def apply[Label, Cost, Cost1]
+           (underlying : OptLattice[Label, Cost], mapping : Label => Cost1,
+            costOrder : Ordering[Cost1])
+          : OptLattice[Label, Cost1] = underlying match {
+    case underlying : ReCostedLattice[Label, _, Cost, OptLattice[Label, Cost]] =>
+      new ReCostedLattice[Label, Cost, Cost1, OptLattice[Label, Cost]](
+                          underlying.underlying, mapping, costOrder)
+    case _ =>
+      new ReCostedLattice[Label, Cost, Cost1, OptLattice[Label, Cost]](
+                          underlying, mapping, costOrder)
+  }
+
+}
+ */
+
+class ReCostedLattice[Label, Cost, Cost1, A <: OptLattice[Label, Cost]]
+                     (underlying1 : A,
+                      val mapping : Label => Cost1,
+                      val costOrder : Ordering[Cost1])
+      extends DelegatingOptLattice[Label, Cost1, A](underlying1) {
+
+  def getLabel(x : LatticeObject) : Label =
+    underlying.getLabel(x)
+
+  def toCost(x : LatticeObject) : Cost1 =
+    mapping(underlying.getLabel(x))
+
+  def isFeasible(x : LatticeObject) : Boolean =
+    underlying.isFeasible(x)
+
+  override def toString : String =
+    "ReCosted(" + underlying.toString + ")"
 
   sanityCheck
 

@@ -15,9 +15,11 @@ class DependentProductLattice[LabelA, LabelB, CostA, CostB,
   /**
    * Depending on the chosen A-object, the B-object might have different
    * feasibility and label functions; but the underlying B-lattice needs to
-   * have the same shape regardless of the A-object.
+   * have the same shape regardless of the A-object, and it needs to have
+   * the same cost order.
    */
   val bBaseLattice : Lattice[LabelB] = bFun(a.getLabel(a.bottom))
+  val bCostOrder : Ordering[CostB] = bFun(a.getLabel(a.bottom)).costOrder
   type BBaseObject = bBaseLattice.LatticeObject
 
   type LatticeObject = (a.LatticeObject, BBaseObject)
@@ -54,6 +56,8 @@ class DependentProductLattice[LabelA, LabelB, CostA, CostB,
       a.latticeOrder.lteq(x._1, y._1) &&
       bBaseLattice.latticeOrder.lteq(x._2, y._2)
   }
+
+  val costOrder = Ordering.Tuple2(a.costOrder, bCostOrder)
 
   def meet(x: LatticeObject, y: LatticeObject): LatticeObject =
     (a.meet(x._1, y._1), bBaseLattice.meet(x._2, y._2))

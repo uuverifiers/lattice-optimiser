@@ -64,6 +64,9 @@ trait Lattice[Label] {
  */
 trait OptLattice[Label, Cost] extends Lattice[Label] {
 
+  /** A total order on costs, which is used for optimization */
+  val costOrder : Ordering[Cost]
+
   /** Map a lattice object to its cost */
   def toCost(x : LatticeObject) : Cost
 
@@ -74,6 +77,7 @@ trait OptLattice[Label, Cost] extends Lattice[Label] {
   protected override def sanityCheck {
     super.sanityCheck
     assert(isFeasible(bottom))
+    assert(costOrder.lteq(toCost(bottom), toCost(top)))
   }
 
   /** Iterate over the feasible objects (represented via their labels)
@@ -114,6 +118,11 @@ trait OptLattice[Label, Cost] extends Lattice[Label] {
       method */
   def map[Label1](mapping : Label => Label1) : OptLattice[Label1, Cost] =
     RelabeledLattice(this, mapping)
+
+  /** Choose the cost of objects as a function of the labels */
+  def withCost[Cost1](mapping : Label => Cost1)
+                     (implicit costOrder : Ordering[Cost1]) =
+    new ReCostedLattice[Label, Cost, Cost1, this.type](this, mapping, costOrder)
 
   /** Filter out objects of the lattice by updating the
       <code>isFeasible</code> method */
