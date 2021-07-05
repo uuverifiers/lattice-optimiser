@@ -15,9 +15,9 @@ object Main extends App {
     println(lattice2)
 
     println(lattice1.incomparableFeasibleObjects(
-              BitSet(1).asInstanceOf[lattice1.LatticeObject],
-              // lattice1.bottom,
-              BitSet(1, 2).asInstanceOf[lattice1.LatticeObject]).toList)
+      BitSet(1).asInstanceOf[lattice1.LatticeObject],
+      // lattice1.bottom,
+      BitSet(1, 2).asInstanceOf[lattice1.LatticeObject]).toList)
   }
 
   println
@@ -33,9 +33,24 @@ object Main extends App {
 
     println(lattice1)
     println("bottom: " + lattice1.getLabel(lattice1.bottom) + ", " +
-              lattice1.isFeasible(lattice1.bottom))
+      lattice1.isFeasible(lattice1.bottom))
     println("top:    " + lattice1.getLabel(lattice1.top) + ", " +
-              lattice1.isFeasible(lattice1.top))
+      lattice1.isFeasible(lattice1.top))
   }
+
+  {
+    println("Lattice test 3")
+
+    val lattice3 = IntervalLattice(2,4)
+    println(lattice3)
+    println("top: " + lattice3.top)
+    println("bottom: " + lattice3.bottom)
+    println(lattice3.succ(lattice3.bottom).toList)
+    println((for (o <- lattice3.succ(lattice3.bottom);
+                  o2 <- lattice3.succ(o))
+    yield o2).toList)
+
+  }
+
 
 }

@@ -115,13 +115,19 @@ object Algorithms {
 
   /**
    * Given a feasible object <code>obj</code>, find a maximal feasible
-   * object above <code>obj</code>.
+   * object above <code>obj</code>. The provided stopping condition
+   * takes as argument the current best object found during maximization,
+   * and the discovered upper bound on feasible objects, and can be used
+   * to stop the optimization process.
    */
-  def maximize[A <: OptLattice[_, _]]
+  def maximizeHelp
+              [A <: OptLattice[_, _], B]
               (lattice : A)
-              (obj : lattice.LatticeObject)
+              (obj : lattice.LatticeObject,
+               stoppingCond :
+                   (lattice.LatticeObject, lattice.LatticeObject) => Option[B])
               (implicit randomData : RandomDataSource)
-             : lattice.LatticeObject = {
+             : Either[lattice.LatticeObject, B] = {
     assert(lattice isFeasible obj)
 
     var current    = obj
@@ -129,68 +135,10 @@ object Algorithms {
     var stepSize   = 0.5
 
     while (current != upperBound) {
-      val next = lattice.intermediate(current, upperBound, stepSize)
-
-      val diffNext = next != current
-      if (diffNext && (lattice isFeasible next)) {
-        current = next
-        if (stepSize < 0.5)
-          stepSize = stepSize * 2.0
-      } else {
-        if (diffNext) {
-          for (newBound <- lattice.oneStepDifference(current, next))
-            upperBound = lattice.meet(upperBound, newBound)
-          stepSize = stepSize / 2.0
-        }
-
-        // try to go just one step then
-        val it = lattice succ current
-        
-        var found = false
-        while (!found && it.hasNext) {
-          val next = it.next
-          if (lattice.latticeOrder.lteq(next, upperBound)) {
-            if (lattice isFeasible next) {
-              current = next
-              found = true
-            } else {
-              for (newBound <- lattice.oneStepDifference(current, next))
-                upperBound = lattice.meet(upperBound, newBound)
-            }
-          }
-        }
-
-        if (!found)
-          upperBound = current
+      stoppingCond(current, upperBound) match {
+        case Some(v) => return Right(v)
+        case None    => // continue
       }
-    }
-
-    current
-  }
-
-  /**
-   * Given a feasible object <code>obj</code>, find a maximal feasible
-   * object above <code>obj</code> (<code>Left</code>). Terminate as
-   * soon as the optimisation discovers an element that is above
-   * <code>notAbove</code> and return that element (<code>Right</code>).
-   * 
-   * TODO: merge this with <code>maximize</code>.
-   */
-  def maximizeNotAbove[A <: OptLattice[_, _]]
-                      (lattice : A)
-                      (obj : lattice.LatticeObject,
-                       notAbove : lattice.LatticeObject)
-                      (implicit randomData : RandomDataSource)
-                     : Either[lattice.LatticeObject, lattice.LatticeObject] = {
-    assert(lattice isFeasible obj)
-
-    var current    = obj
-    var upperBound = lattice.top
-    var stepSize   = 0.5
-
-    while (current != upperBound) {
-      if (lattice.latticeOrder.lteq(notAbove, current))
-        return Right(current)
 
       val next = lattice.intermediate(current, upperBound, stepSize)
 
@@ -229,6 +177,46 @@ object Algorithms {
     }
 
     Left(current)
+  }
+
+  /**
+   * Given a feasible object <code>obj</code>, find a maximal feasible
+   * object above <code>obj</code>.
+   */
+  def maximize[A <: OptLattice[_, _]]
+              (lattice : A)
+              (obj : lattice.LatticeObject)
+              (implicit randomData : RandomDataSource)
+             : lattice.LatticeObject = {
+    def stopCond(x : lattice.LatticeObject,
+                 y : lattice.LatticeObject) : Option[Unit] = None
+    val Left(r) = maximizeHelp(lattice)(obj, stopCond _)
+    r
+  }
+
+  /**
+   * Given a feasible object <code>obj</code>, find a maximal feasible
+   * object above <code>obj</code> (<code>Left</code>). Terminate as
+   * soon as the optimization discovers an element that is above
+   * <code>notAbove</code> and return that element (<code>Right</code>).
+   */
+  def maximizeNotAbove[A <: OptLattice[_, _]]
+                      (lattice : A)
+                      (obj : lattice.LatticeObject,
+                       notAbove : lattice.LatticeObject)
+                      (implicit randomData : RandomDataSource)
+                     : Either[lattice.LatticeObject, lattice.LatticeObject] = {
+    import lattice.{LatticeObject => LObject}
+
+    val stopCond : (LObject, LObject) => Option[LObject] = {
+      (current, bound) =>
+        if (lattice.latticeOrder.lteq(notAbove, current))
+          Some(current)
+        else
+          None
+    }
+
+    maximizeHelp(lattice)(obj, stopCond)
   }
 
 }
