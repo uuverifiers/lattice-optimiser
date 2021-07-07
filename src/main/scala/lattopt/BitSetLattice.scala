@@ -24,12 +24,41 @@ object PowerSetLattice {
     }
   }
 
+  def withScores[A, S](elements : Seq[(A, S)])
+                      (implicit snum : Numeric[S])
+                     : OptLattice[Set[A], S] = {
+    val indexed =
+      elements.toIndexedSeq
+    val baseLattice =
+      BitSetLattice(elements.size) withScore {
+        bs => (for (ind <- bs.iterator) yield indexed(ind)._2).sum
+      }
+    for (bs <- baseLattice) yield {
+      (for (ind <- bs.iterator) yield indexed(ind)._1).toSet
+    }
+  }
+
   def inverted[A](elements : Seq[A]) : OptLattice[Set[A], Int] = {
     val indexed = elements.toIndexedSeq
     for (bs <- BitSetLattice.inverted(elements.size)) yield {
       (for (ind <- bs.iterator) yield indexed(ind)).toSet
     }
   }
+
+  def invertedWithCosts[A, S](elements : Seq[(A, S)])
+                             (implicit snum : Numeric[S])
+                            : OptLattice[Set[A], S] = {
+    val indexed =
+      elements.toIndexedSeq
+    val baseLattice =
+      BitSetLattice.inverted(elements.size) withScore {
+        bs => (for (ind <- bs.iterator) yield snum.negate(indexed(ind)._2)).sum
+      }
+    for (bs <- baseLattice) yield {
+      (for (ind <- bs.iterator) yield indexed(ind)._1).toSet
+    }
+  }
+
 }
 
 class BitSetLattice private (width : Int) extends OptLattice[BitSet, Int] {
