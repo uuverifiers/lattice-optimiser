@@ -57,18 +57,18 @@ trait Lattice[Label] {
 
 /**
  * The parent of all optimisation lattices. Each optimisation lattice
- * is a lattice, and has in addition a <code>Cost</code> type defining
+ * is a lattice, and has in addition a <code>Score</code> type defining
  * the range of the objective function. The <code>isFeasible</code>
  * function defines which of the objects of the lattice are considered
  * during search and optimisation.
  */
-trait OptLattice[Label, Cost] extends Lattice[Label] {
+trait OptLattice[Label, Score] extends Lattice[Label] {
 
-  /** A total order on costs, which is used for optimization */
-  val costOrder : Ordering[Cost]
+  /** A total order on scores, which is used for optimization */
+  val scoreOrder : Ordering[Score]
 
-  /** Map a lattice object to its cost */
-  def toCost(x : LatticeObject) : Cost
+  /** Map a lattice object to its score */
+  def toScore(x : LatticeObject) : Score
 
   /** Check whether the given lattice object is feasible */
   def isFeasible(x : LatticeObject) : Boolean
@@ -77,7 +77,7 @@ trait OptLattice[Label, Cost] extends Lattice[Label] {
   protected override def sanityCheck {
     super.sanityCheck
     assert(isFeasible(bottom))
-    assert(costOrder.lteq(toCost(bottom), toCost(top)))
+    assert(scoreOrder.lteq(toScore(bottom), toScore(top)))
   }
 
   /** Iterate over the feasible objects (represented via their labels)
@@ -110,45 +110,47 @@ trait OptLattice[Label, Cost] extends Lattice[Label] {
    */
   def incomparableFeasibleObjects(lowerBound : LatticeObject,
                                   comp : LatticeObject)
-                                 : Iterator[LatticeObject]
+                                : Iterator[LatticeObject]
 
   //////////////////////////////////////////////////////////////////////////////
 
   /** Map labels to some new type, updating the <code>getLabel</code>
       method */
-  def map[Label1](mapping : Label => Label1) : OptLattice[Label1, Cost] =
+  def map[Label1](mapping : Label => Label1) : OptLattice[Label1, Score] =
     RelabeledLattice(this, mapping)
 
-  /** Choose the cost of objects as a function of the labels */
-  def withCost[Cost1](mapping : Label => Cost1)
-                     (implicit costOrder : Ordering[Cost1]) =
-    new ReCostedLattice[Label, Cost, Cost1, this.type](this, mapping, costOrder)
+  /** Choose the score of objects as a function of the labels */
+  def withScore[Score1](mapping : Label => Score1)
+                       (implicit scoreOrder : Ordering[Score1])
+                      : OptLattice[Label, Score1] =
+    new ReScoredLattice[Label, Score, Score1, this.type](this, mapping,
+                                                         scoreOrder)
 
   /** Filter out objects of the lattice by updating the
       <code>isFeasible</code> method */
-  def filter(pred : Label => Boolean) : OptLattice[Label, Cost] =
+  def filter(pred : Label => Boolean) : OptLattice[Label, Score] =
     FilteredLattice(this, pred)
 
   /** Filter out objects of the lattice by updating the
       <code>isFeasible</code> method */
-  def filterObjects(p : LatticeObject => Boolean) : OptLattice[Label, Cost] =
-    new ObjectFilteredLattice[Label, Cost, this.type](this) {
+  def filterObjects(p : LatticeObject => Boolean) : OptLattice[Label, Score] =
+    new ObjectFilteredLattice[Label, Score, this.type](this) {
       def filteringPred(x : LatticeObject) : Boolean = p(x)
     }
 
   /** Filter out objects of the lattice by updating the
       <code>isFeasible</code> method */
-  def cachedFilter(pred : Label => Boolean) : OptLattice[Label, Cost] =
+  def cachedFilter(pred : Label => Boolean) : OptLattice[Label, Score] =
     CachedFilteredLattice(this, pred)
 
   /** Construct a dependent product */
-  def flatMap[Label1, Cost1]
-             (mapping : Label => OptLattice[Label1, Cost1])
-            : OptLattice[Label1, (Cost, Cost1)] =
+  def flatMap[Label1, Score1]
+             (mapping : Label => OptLattice[Label1, Score1])
+            : OptLattice[Label1, (Score, Score1)] =
     new DependentProductLattice(this, mapping)
 
-  def *[Label1, Cost1, That <: OptLattice[Label1, Cost1]] (that : That)
-       : OptLattice[(Label, Label1), (Cost, Cost1)] =
+  def *[Label1, Score1, That <: OptLattice[Label1, Score1]] (that : That)
+       : OptLattice[(Label, Label1), (Score, Score1)] =
     new ProductLattice(this, that)
 
 }

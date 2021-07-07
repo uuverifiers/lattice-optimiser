@@ -6,20 +6,20 @@ package lattopt;
  * component. This class is used to implement the <code>flatMap</code>
  * method.
  */
-class DependentProductLattice[LabelA, LabelB, CostA, CostB,
-                              A <: OptLattice[LabelA, CostA],
-                              B <: OptLattice[LabelB, CostB]]
+class DependentProductLattice[LabelA, LabelB, ScoreA, ScoreB,
+                              A <: OptLattice[LabelA, ScoreA],
+                              B <: OptLattice[LabelB, ScoreB]]
                              (val a : A, val bFun : LabelA => B)
-      extends OptLattice[LabelB, (CostA, CostB)] {
+      extends OptLattice[LabelB, (ScoreA, ScoreB)] {
 
   /**
    * Depending on the chosen A-object, the B-object might have different
    * feasibility and label functions; but the underlying B-lattice needs to
    * have the same shape regardless of the A-object, and it needs to have
-   * the same cost order.
+   * the same score order.
    */
   val bBaseLattice : Lattice[LabelB] = bFun(a.getLabel(a.bottom))
-  val bCostOrder : Ordering[CostB] = bFun(a.getLabel(a.bottom)).costOrder
+  val bScoreOrder : Ordering[ScoreB] = bFun(a.getLabel(a.bottom)).scoreOrder
   type BBaseObject = bBaseLattice.LatticeObject
 
   type LatticeObject = (a.LatticeObject, BBaseObject)
@@ -57,7 +57,7 @@ class DependentProductLattice[LabelA, LabelB, CostA, CostB,
       bBaseLattice.latticeOrder.lteq(x._2, y._2)
   }
 
-  val costOrder = Ordering.Tuple2(a.costOrder, bCostOrder)
+  val scoreOrder = Ordering.Tuple2(a.scoreOrder, bScoreOrder)
 
   def meet(x: LatticeObject, y: LatticeObject): LatticeObject =
     (a.meet(x._1, y._1), bBaseLattice.meet(x._2, y._2))
@@ -88,9 +88,9 @@ class DependentProductLattice[LabelA, LabelB, CostA, CostB,
       b.isFeasible(x._2.asInstanceOf[b.LatticeObject])
     }
  
-  def toCost(x : LatticeObject) = {
+  def toScore(x : LatticeObject) = {
     val b = bFun(a.getLabel(x._1))
-    (a.toCost(x._1), b.toCost(x._2.asInstanceOf[b.LatticeObject]))
+    (a.toScore(x._1), b.toScore(x._2.asInstanceOf[b.LatticeObject]))
   }
     
   def getLabel(x : LatticeObject) = {

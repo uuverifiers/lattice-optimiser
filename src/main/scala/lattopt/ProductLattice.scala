@@ -1,11 +1,11 @@
 
 package lattopt;
 
-class ProductLattice[LabelA, LabelB, CostA, CostB,
-                     A <: OptLattice[LabelA, CostA],
-                     B <: OptLattice[LabelB, CostB]]
+class ProductLattice[LabelA, LabelB, ScoreA, ScoreB,
+                     A <: OptLattice[LabelA, ScoreA],
+                     B <: OptLattice[LabelB, ScoreB]]
                     (val a : A, val b : B)
-                    extends OptLattice[(LabelA, LabelB), (CostA, CostB)] {
+                    extends OptLattice[(LabelA, LabelB), (ScoreA, ScoreB)] {
   type LatticeObject = (a.LatticeObject, b.LatticeObject)
 
   override def toString =
@@ -34,7 +34,7 @@ class ProductLattice[LabelA, LabelB, CostA, CostB,
       a.latticeOrder.lteq(x._1, y._1) && b.latticeOrder.lteq(x._2, y._2)
   }
 
-  val costOrder = Ordering.Tuple2(a.costOrder, b.costOrder)
+  val scoreOrder = Ordering.Tuple2(a.scoreOrder, b.scoreOrder)
 
   def meet(x: LatticeObject, y: LatticeObject): LatticeObject =
       (a.meet(x._1, y._1), b.meet(x._2, y._2))
@@ -73,8 +73,8 @@ class ProductLattice[LabelA, LabelB, CostA, CostB,
   def isFeasible(x: LatticeObject) =       
     a.isFeasible(x._1) && b.isFeasible(x._2)
  
-  def toCost(x : LatticeObject) =
-    (a.toCost(x._1), b.toCost(x._2))
+  def toScore(x : LatticeObject) =
+    (a.toScore(x._1), b.toScore(x._2))
     
   def getLabel(x : LatticeObject) =
     (a.getLabel(x._1), b.getLabel(x._2)) 

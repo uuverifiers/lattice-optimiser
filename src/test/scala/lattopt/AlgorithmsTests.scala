@@ -19,6 +19,11 @@ object AlgorithmsTests extends Properties("Algorithms") {
          if ((0 until 10) forall { ind => !bv1(2*ind) || !bv1(2*ind + 1) }))
     yield bv1
 
+  val lattice4 =
+    for (bv1 <- BitSetLattice(10);
+         if ((0 until 5) forall { ind => !bv1(2*ind) || !bv1(2*ind + 1) }))
+    yield bv1
+
   property("incomparableFeasibleObjects1") = {
 
     val it1 = lattice1 succ lattice1.bottom
@@ -81,6 +86,40 @@ object AlgorithmsTests extends Properties("Algorithms") {
 
       result.size == 3 &&
       (result reduceLeft lattice2.join) == lattice2.top
+    }
+  }
+
+  property("optimize2") = {
+    (0 until 3) forall { seed =>
+      implicit val randomData = new SeededRandomDataSource(seed)
+
+      val latt = lattice1.withScore(_._3)
+      val result = Algorithms.optimalFeasibleObjects(latt)(latt.bottom)
+
+      result.size == 2 && (result forall { x => latt.toScore(x) == 9 }) &&
+      (result reduceLeft latt.join) == latt.top
+    }
+  }
+
+  property("optimize3") = {
+    (0 until 3) forall { seed =>
+      implicit val randomData = new SeededRandomDataSource(seed)
+
+      val latt = lattice1.withScore(x => 2*x._1.size + x._2.size)
+      val result = Algorithms.optimalFeasibleObjects(latt)(latt.bottom)
+
+      result.size == 1 && (result forall { x => latt.toScore(x) == 13 })
+    }
+  }
+
+  property("optimize4") = {
+    (0 until 3) forall { seed =>
+      implicit val randomData = new SeededRandomDataSource(seed)
+
+      val latt = lattice4.withScore(x => x.sum)
+      val result = Algorithms.optimalFeasibleObjects(latt)(latt.bottom)
+
+      result.size == 1 && (result forall { x => latt.toScore(x) == 25 })
     }
   }
 

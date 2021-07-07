@@ -2,6 +2,7 @@
 package lattopt;
 
 import scala.util.Random
+import scala.collection.mutable.ArrayBuffer
 
 /**
  * Class to produce data needed to randomise proof construction.
@@ -34,6 +35,28 @@ abstract class RandomDataSource {
    * Produce a random double in the range <code>[0.0, 1.0)</code>.
    */
   def nextDouble : Double
+
+  /**
+   * Shuffle the given elements.
+   */
+  def shuffle[A](seq : Iterable[A]) : Seq[A] = {
+    val res = new ArrayBuffer[A]
+    res ++= seq
+
+    if (isRandom) {
+      val N = res.size
+      for (i <- 0 until (N - 1)) {
+        val newI = nextInt(N - i) + i
+        if (newI != i) {
+          val t = res(i)
+          res(i) = res(newI)
+          res(newI) = t
+        }
+      }
+    }
+
+    res.toSeq
+  }
 
 }
 

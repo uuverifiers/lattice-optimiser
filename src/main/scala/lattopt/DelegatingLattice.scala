@@ -1,9 +1,9 @@
 
 package lattopt;
 
-abstract class DelegatingOptLattice[Label, Cost, A <: OptLattice[_, _]]
+abstract class DelegatingOptLattice[Label, Score, A <: OptLattice[_, _]]
                                    (val underlying : A)
-         extends OptLattice[Label, Cost] {
+         extends OptLattice[Label, Score] {
 
   type LatticeObject = underlying.LatticeObject
 
@@ -52,17 +52,17 @@ abstract class DelegatingOptLattice[Label, Cost, A <: OptLattice[_, _]]
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class SameTypeDelegatingOptLattice[Label, Cost, A <: OptLattice[Label, Cost]]
+class SameTypeDelegatingOptLattice[Label, Score, A <: OptLattice[Label, Score]]
                                   (underlying1 : A)
-      extends DelegatingOptLattice[Label, Cost, A](underlying1) {
+      extends DelegatingOptLattice[Label, Score, A](underlying1) {
 
-  val costOrder = underlying.costOrder
+  val scoreOrder = underlying.scoreOrder
 
   def getLabel(x : LatticeObject) : Label =
     underlying.getLabel(x)
 
-  def toCost(x : LatticeObject) : Cost =
-    underlying.toCost(x)
+  def toScore(x : LatticeObject) : Score =
+    underlying.toScore(x)
 
   def isFeasible(x : LatticeObject) : Boolean =
     underlying.isFeasible(x)
@@ -73,10 +73,10 @@ class SameTypeDelegatingOptLattice[Label, Cost, A <: OptLattice[Label, Cost]]
 
 object RelabeledLattice {
 
-  def apply[Label, Label1, Cost]
-           (underlying : OptLattice[Label, Cost], mapping : Label => Label1)
-          : OptLattice[Label1, Cost] = underlying match {
-    case underlying : RelabeledLattice[_, Label, Cost, _] =>
+  def apply[Label, Label1, Score]
+           (underlying : OptLattice[Label, Score], mapping : Label => Label1)
+          : OptLattice[Label1, Score] = underlying match {
+    case underlying : RelabeledLattice[_, Label, Score, _] =>
       new RelabeledLattice(underlying.underlying,
                            underlying.mapping andThen mapping)
     case _ =>
@@ -85,17 +85,17 @@ object RelabeledLattice {
 
 }
 
-class RelabeledLattice[Label, Label1, Cost, A <: OptLattice[Label, Cost]] private
+class RelabeledLattice[Label, Label1, Score, A <: OptLattice[Label, Score]] private
                       (underlying1 : A, val mapping : Label => Label1)
-      extends DelegatingOptLattice[Label1, Cost, A](underlying1) {
+      extends DelegatingOptLattice[Label1, Score, A](underlying1) {
 
-  val costOrder = underlying.costOrder
+  val scoreOrder = underlying.scoreOrder
 
   def getLabel(x : LatticeObject) : Label1 =
     mapping(underlying.getLabel(x))
 
-  def toCost(x : LatticeObject) : Cost =
-    underlying.toCost(x)
+  def toScore(x : LatticeObject) : Score =
+    underlying.toScore(x)
 
   def isFeasible(x : LatticeObject) : Boolean =
     underlying.isFeasible(x)
@@ -110,40 +110,40 @@ class RelabeledLattice[Label, Label1, Cost, A <: OptLattice[Label, Cost]] privat
 ////////////////////////////////////////////////////////////////////////////////
 
 /*
-object ReCostedLattice {
+object ReScoredLattice {
 
-  def apply[Label, Cost, Cost1]
-           (underlying : OptLattice[Label, Cost], mapping : Label => Cost1,
-            costOrder : Ordering[Cost1])
-          : OptLattice[Label, Cost1] = underlying match {
-    case underlying : ReCostedLattice[Label, _, Cost, OptLattice[Label, Cost]] =>
-      new ReCostedLattice[Label, Cost, Cost1, OptLattice[Label, Cost]](
-                          underlying.underlying, mapping, costOrder)
+  def apply[Label, Score, Score1]
+           (underlying : OptLattice[Label, Score], mapping : Label => Score1,
+            scoreOrder : Ordering[Score1])
+          : OptLattice[Label, Score1] = underlying match {
+    case underlying : ReScoreedLattice[Label, _, Score, OptLattice[Label, Score]] =>
+      new ReScoreedLattice[Label, Score, Score1, OptLattice[Label, Score]](
+                          underlying.underlying, mapping, scoreOrder)
     case _ =>
-      new ReCostedLattice[Label, Cost, Cost1, OptLattice[Label, Cost]](
-                          underlying, mapping, costOrder)
+      new ReScoreedLattice[Label, Score, Score1, OptLattice[Label, Score]](
+                          underlying, mapping, scoreOrder)
   }
 
 }
  */
 
-class ReCostedLattice[Label, Cost, Cost1, A <: OptLattice[Label, Cost]]
+class ReScoredLattice[Label, Score, Score1, A <: OptLattice[Label, Score]]
                      (underlying1 : A,
-                      val mapping : Label => Cost1,
-                      val costOrder : Ordering[Cost1])
-      extends DelegatingOptLattice[Label, Cost1, A](underlying1) {
+                      val mapping : Label => Score1,
+                      val scoreOrder : Ordering[Score1])
+      extends DelegatingOptLattice[Label, Score1, A](underlying1) {
 
   def getLabel(x : LatticeObject) : Label =
     underlying.getLabel(x)
 
-  def toCost(x : LatticeObject) : Cost1 =
+  def toScore(x : LatticeObject) : Score1 =
     mapping(underlying.getLabel(x))
 
   def isFeasible(x : LatticeObject) : Boolean =
     underlying.isFeasible(x)
 
   override def toString : String =
-    "ReCosted(" + underlying.toString + ")"
+    "ReScoreed(" + underlying.toString + ")"
 
   sanityCheck
 
@@ -152,19 +152,19 @@ class ReCostedLattice[Label, Cost, Cost1, A <: OptLattice[Label, Cost]]
 ////////////////////////////////////////////////////////////////////////////////
 
 object FilteredLattice {
-  def apply[Label, Cost]
-           (underlying : OptLattice[Label, Cost], pred : Label => Boolean)
-          : OptLattice[Label, Cost] = underlying match {
-    case underlying : FilteredLattice[Label, Cost, _] =>
+  def apply[Label, Score]
+           (underlying : OptLattice[Label, Score], pred : Label => Boolean)
+          : OptLattice[Label, Score] = underlying match {
+    case underlying : FilteredLattice[Label, Score, _] =>
       new FilteredLattice(underlying.underlying, x => underlying.pred(x) && pred(x))
     case _ =>
       new FilteredLattice(underlying, pred)
   }
 }
 
-class FilteredLattice[Label, Cost, A <: OptLattice[Label, Cost]] private
+class FilteredLattice[Label, Score, A <: OptLattice[Label, Score]] private
                      (underlying1 : A, val pred : Label => Boolean)
-     extends SameTypeDelegatingOptLattice[Label, Cost, A](underlying1) {
+     extends SameTypeDelegatingOptLattice[Label, Score, A](underlying1) {
 
   private def evalPred(obj : LatticeObject) = pred(getLabel(obj))
 
@@ -188,9 +188,9 @@ class FilteredLattice[Label, Cost, A <: OptLattice[Label, Cost]] private
 
 ////////////////////////////////////////////////////////////////////////////////
 
-abstract class ObjectFilteredLattice[Label, Cost, A <: OptLattice[Label, Cost]]
+abstract class ObjectFilteredLattice[Label, Score, A <: OptLattice[Label, Score]]
                                     (underlying1 : A)
-         extends SameTypeDelegatingOptLattice[Label, Cost, A](underlying1) {
+         extends SameTypeDelegatingOptLattice[Label, Score, A](underlying1) {
 
   def filteringPred(x : LatticeObject) : Boolean
 
@@ -215,15 +215,15 @@ abstract class ObjectFilteredLattice[Label, Cost, A <: OptLattice[Label, Cost]]
 ////////////////////////////////////////////////////////////////////////////////
 
 object CachedFilteredLattice {
-  def apply[Label, Cost]
-           (underlying : OptLattice[Label, Cost], pred : Label => Boolean)
-          : OptLattice[Label, Cost] =
+  def apply[Label, Score]
+           (underlying : OptLattice[Label, Score], pred : Label => Boolean)
+          : OptLattice[Label, Score] =
     new CachedFilteredLattice(underlying, pred)
 }
 
-class CachedFilteredLattice[Label, Cost, A <: OptLattice[Label, Cost]] private
+class CachedFilteredLattice[Label, Score, A <: OptLattice[Label, Score]] private
                            (underlying1 : A, val pred : Label => Boolean)
-     extends SameTypeDelegatingOptLattice[Label, Cost, A](underlying1) {
+     extends SameTypeDelegatingOptLattice[Label, Score, A](underlying1) {
 
   private val predCache =
     new PredicateCache[A, underlying.LatticeObject](underlying) {

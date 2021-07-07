@@ -12,7 +12,9 @@ object Algorithms {
                             (lattice : A)
                             (lowerBound : lattice.LatticeObject)
                             (implicit randomData : RandomDataSource)
-                           : Iterator[lattice.LatticeObject] =
+                          : Iterator[lattice.LatticeObject] = {
+    assert(lattice isFeasible lowerBound)
+
     new Iterator[lattice.LatticeObject] {
       import lattice.{LatticeObject => LObject}
 
@@ -38,6 +40,7 @@ object Algorithms {
         res
       }
     }
+  }
 
   /**
    * Compute the meet of all maximal feasible objects above
@@ -48,6 +51,8 @@ object Algorithms {
                                (lowerBound : lattice.LatticeObject)
                                (implicit randomData : RandomDataSource)
                               : lattice.LatticeObject = {
+    assert(lattice isFeasible lowerBound)
+
     val blocked     = new ArrayBuffer[lattice.LatticeObject]
     var currentMeet = lattice.top
 
@@ -75,6 +80,59 @@ object Algorithms {
   }
 
   /**
+   * Compute the maximal feasible objects above
+   * <code>lowerBound</code> with maximum score.
+   */
+  def optimalFeasibleObjects[Label, Score]
+                            (lattice : OptLattice[Label, Score])
+                            (lowerBound : lattice.LatticeObject)
+                            (implicit randomData : RandomDataSource)
+                           : Set[lattice.LatticeObject] = {
+    assert(lattice isFeasible lowerBound)
+
+    import lattice.{LatticeObject => LObject, toScore, scoreOrder}
+    val optima, blocked = new ArrayBuffer[LObject]
+    var bestScore : Score = toScore(lowerBound)
+
+    val stopCond : (LObject, LObject) => Option[LObject] = {
+      (current : LObject, bound : LObject) =>
+      if (scoreOrder.lt(toScore(bound), bestScore))
+        Some(bound)
+      else
+        None
+    }
+
+    var start =
+      incomparableFeasibleObjects(lattice)(
+        lowerBound, optima.toSeq ++ blocked.toSeq).find(x => true)
+    while (start.isDefined) {
+      maximizeHelp(lattice)(start.get, stopCond) match {
+        case Left(opt) =>
+          scoreOrder.compare(toScore(opt), bestScore) match {
+            case n if n < 0 =>
+              blocked += opt
+            case 0 =>
+              optima += opt
+            case _ => {
+              bestScore = toScore(opt)
+              blocked ++= optima
+              optima.clear
+              optima += opt
+            }
+          }
+        case Right(bound) =>
+          blocked += bound
+      }
+
+      start =
+        incomparableFeasibleObjects(lattice)(
+          lowerBound, optima.toSeq ++ blocked.toSeq).find(x => true)
+    }
+
+    optima.toSet
+  }
+
+  /**
    * Given a feasible element <code>lowerBound</code>, compute a set
    * <code>S</code> of feasible objects <code>&gt;= lowerBound</code>
    * that are <ol> <li> incomparable to all objects in
@@ -94,6 +152,8 @@ object Algorithms {
                     incomparableFeasibleObjects => incompFeasibles}
 
     // TODO: sort comps in a good way
+    // TODO: consider randomisation
+
     val compsSorted = comps.toList
 
     def incompHelp(currentLowerBound : LObject,
