@@ -4,6 +4,8 @@ import scala.collection.mutable.ArrayBuffer
 
 object Algorithms {
 
+  var debug = false
+
   /**
    * Enumerate all maximal feasible objects above
    * <code>lowerBound</code>.
@@ -103,7 +105,7 @@ object Algorithms {
     }
 
     var start =
-      incomparableFeasibleObjects(lattice)(
+      incomparableFeasibleObjectsRand(lattice)(
         lowerBound, optima.toSeq ++ blocked.toSeq).find(x => true)
     while (start.isDefined) {
       maximizeHelp(lattice)(start.get, stopCond) match {
@@ -111,12 +113,20 @@ object Algorithms {
           scoreOrder.compare(toScore(opt), bestScore) match {
             case n if n < 0 =>
               blocked += opt
-            case 0 =>
+            case 0 => {
               optima += opt
+              if (debug)
+                Console.err.println("New optimum: " + lattice.getLabel(opt))
+            }
             case _ => {
               bestScore = toScore(opt)
+              if (debug) {
+                Console.err.println("New optimum: " + lattice.getLabel(opt))
+                Console.err.println("New best score: " + bestScore)
+              }
               blocked ++= optima
               optima.clear
+//              blocked.clear
               optima += opt
             }
           }
@@ -125,7 +135,7 @@ object Algorithms {
       }
 
       start =
-        incomparableFeasibleObjects(lattice)(
+        incomparableFeasibleObjectsRand(lattice)(
           lowerBound, optima.toSeq ++ blocked.toSeq).find(x => true)
     }
 
@@ -151,10 +161,8 @@ object Algorithms {
                     latticeOrder => order,
                     incomparableFeasibleObjects => incompFeasibles}
 
-    // TODO: sort comps in a good way
-    // TODO: consider randomisation
-
-    val compsSorted = comps.toList
+    val compsSorted =
+      comps.toList sortBy { obj => estimateIncomparableNum(lattice)(obj) }
 
     def incompHelp(currentLowerBound : LObject,
                    remComps : List[LObject]) : Iterator[LObject] = {
@@ -172,6 +180,77 @@ object Algorithms {
 
     incompHelp(lowerBound, compsSorted)
   }
+
+  /**
+   * Given a feasible element <code>lowerBound</code>, compute a set
+   * <code>S</code> of feasible objects <code>&gt;= lowerBound</code>
+   * that are <ol> <li> incomparable to all objects in
+   * <code>comps</code>, and</li> <li> <code>S</code> has the property
+   * that for every feasible object <code>o &gt;= lowerBound</code>
+   * and <code>o</code> is incomparable to the objects in
+   * <code>comps</code>, there is an element <code>u in S</code> such
+   * that <code>u &lt;= o</code>. </li> </ol>.
+   */
+  def incomparableFeasibleObjectsRand[A <: OptLattice[_, _]]
+                                 (lattice : A)
+                                 (lowerBound : lattice.LatticeObject,
+                                  comps : Iterable[lattice.LatticeObject])
+                                 (implicit randomData : RandomDataSource)
+                               : Iterator[lattice.LatticeObject] = {
+    import lattice.{LatticeObject => LObject,
+                    latticeOrder => order,
+                    incomparableFeasibleObjects => incompFeasibles}
+
+    val compsSorted =
+      comps.toList sortBy { obj => estimateIncomparableNum(lattice)(obj) }
+
+//    val compsSorted = (randomData shuffle comps).toList
+
+    def incompHelp(currentLowerBound : LObject,
+                   remComps : List[LObject]) : Iterator[LObject] = {
+      remComps match {
+        case List() =>
+          Iterator single currentLowerBound
+        case comp :: otherComps =>
+          for (obj1 <- randomData.shuffle(
+                         incompFeasibles(currentLowerBound,
+                                         comp).toList).iterator;
+               obj2 <- incompHelp(obj1, otherComps))
+          yield obj2
+      }
+    }
+
+    // TODO: filter objects based on previously returned objects
+
+    incompHelp(lowerBound, compsSorted)
+  }
+
+  /**
+   * Estimate the number of incomparable objects for the given lattice
+   * object. This is used to sort objects in
+   * <code>incomparableFeasibleObjects</code>
+   */
+  private def estimateIncomparableNum(lattice : Lattice[_])
+                                     (obj : lattice.LatticeObject) : Int =
+    lattice match {
+      case lattice : DelegatingOptLattice[_, _, _] =>
+        estimateIncomparableNum(
+          lattice.underlying)(
+          obj.asInstanceOf[lattice.underlying.LatticeObject])
+      case lattice : ProductLattice[_, _, _, _, _, _] => {
+        val (x, y) = obj.asInstanceOf[lattice.LatticeObject]
+        estimateIncomparableNum(lattice.a)(x) +
+        estimateIncomparableNum(lattice.b)(y)
+      }
+      case lattice : DependentProductLattice[_, _, _, _, _, _] => {
+        val (x, y) = obj.asInstanceOf[lattice.LatticeObject]
+        estimateIncomparableNum(lattice.a)(x) +
+        estimateIncomparableNum(lattice.bBaseLattice)(
+                                y.asInstanceOf[lattice.BBaseObject])
+      }
+      case lattice : BitSetLattice =>
+        lattice.width - obj.asInstanceOf[lattice.LatticeObject].size
+    }
 
   /**
    * Given a feasible object <code>obj</code>, find a maximal feasible

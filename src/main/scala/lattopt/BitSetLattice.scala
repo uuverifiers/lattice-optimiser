@@ -61,7 +61,7 @@ object PowerSetLattice {
 
 }
 
-class BitSetLattice private (width : Int) extends OptLattice[BitSet, Int] {
+class BitSetLattice private (val width : Int) extends OptLattice[BitSet, Int] {
   type LatticeObject = BitSet
 
   val latticeOrder  = new PartialOrdering[BitSet] {
