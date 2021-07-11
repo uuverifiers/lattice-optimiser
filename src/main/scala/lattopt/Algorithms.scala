@@ -20,14 +20,12 @@ object Algorithms {
     new Iterator[lattice.LatticeObject] {
       import lattice.{LatticeObject => LObject}
 
-      private val results = new ArrayBuffer[LObject]
+      private val incompSolver = new IncomparablesSolver[A, LObject](lattice)
       private var start : Option[LObject] = null
 
       private def setStart : Unit =
         if (start == null)
-          start =
-            incomparableFeasibleObjects(lattice)(lowerBound,
-                                                 results.toSeq).find(x => true)
+          start = incompSolver findIncomparableObject lowerBound
 
       def hasNext = {
         setStart
@@ -38,7 +36,7 @@ object Algorithms {
         setStart
         val res = maximize(lattice)(start.get)
         start = null
-        results += res
+        incompSolver addConstraint res
         res
       }
     }
@@ -54,29 +52,28 @@ object Algorithms {
                                (implicit randomData : RandomDataSource)
                               : lattice.LatticeObject = {
     assert(lattice isFeasible lowerBound)
-
-    val blocked     = new ArrayBuffer[lattice.LatticeObject]
-    var currentMeet = lattice.top
+    import lattice.{LatticeObject => LObject}
+    
+    val incompSolver = new IncomparablesSolver[A, LObject](lattice)
+    var currentMeet  = lattice.top
 
     var cont = (currentMeet != lowerBound)
-    while (cont) {
-      val it = incomparableFeasibleObjects(lattice)(lowerBound, blocked)
-      if (it.hasNext) {
-        val start = it.next
-        maximizeNotAbove(lattice)(start, currentMeet) match {
-          case Left(maximal) => {
-            currentMeet = lattice.meet(currentMeet, maximal)
-            blocked += maximal
-            cont = (currentMeet != lowerBound)
+    while (cont)
+      (incompSolver findIncomparableObject lowerBound) match {
+        case Some(start) =>
+          maximizeNotAbove(lattice)(start, currentMeet) match {
+            case Left(maximal) => {
+              currentMeet = lattice.meet(currentMeet, maximal)
+              incompSolver addConstraint maximal
+              cont = (currentMeet != lowerBound)
+            }
+            case Right(nonMax) => {
+              incompSolver addConstraint nonMax
+            }
           }
-          case Right(nonMax) => {
-            blocked += nonMax
-          }
-        }
-      } else {
-        cont = false
+        case None =>
+          cont = false
       }
-    }
 
     currentMeet
   }
@@ -93,7 +90,7 @@ object Algorithms {
     assert(lattice isFeasible lowerBound)
 
     import lattice.{LatticeObject => LObject, toScore, scoreOrder}
-    val optima, blocked = new ArrayBuffer[LObject]
+    val optima = new ArrayBuffer[LObject]
     var bestScore : Score = toScore(lowerBound)
 
     val stopCond : (LObject, LObject) => Option[LObject] = {
@@ -104,17 +101,20 @@ object Algorithms {
         None
     }
 
-    var start =
-      incomparableFeasibleObjectsRand(lattice)(
-        lowerBound, optima.toSeq ++ blocked.toSeq).find(x => true)
+    val incompSolver =
+      new IncomparablesSolver[OptLattice[Label, Score], LObject](lattice)
+
+    var start = incompSolver.findIncomparableObject(lowerBound)
+
     while (start.isDefined) {
       maximizeHelp(lattice)(start.get, stopCond) match {
         case Left(opt) =>
           scoreOrder.compare(toScore(opt), bestScore) match {
             case n if n < 0 =>
-              blocked += opt
+              incompSolver addConstraint opt
             case 0 => {
               optima += opt
+              incompSolver addConstraint opt
               if (debug)
                 Console.err.println("New optimum: " + lattice.getLabel(opt))
             }
@@ -124,19 +124,16 @@ object Algorithms {
                 Console.err.println("New optimum: " + lattice.getLabel(opt))
                 Console.err.println("New best score: " + bestScore)
               }
-              blocked ++= optima
               optima.clear
-//              blocked.clear
               optima += opt
+              incompSolver addConstraint opt
             }
           }
         case Right(bound) =>
-          blocked += bound
+          incompSolver addConstraint bound
       }
 
-      start =
-        incomparableFeasibleObjectsRand(lattice)(
-          lowerBound, optima.toSeq ++ blocked.toSeq).find(x => true)
+      start = incompSolver.findIncomparableObject(lowerBound)
     }
 
     optima.toSet
